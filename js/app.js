@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
         inGame: false,
         gameMode: null,              // 'tier' | 'exam_time' | 'exam_count' | 'practice' | 'mistakes'
         activeTierId: 1,
+        activeSubLevel: 1,           // 1:下級, 2:中級, 3:上級
 
         // 題目與統計
         currentQuestionIndex: 0,
@@ -204,18 +205,37 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderStats() {
         const p = engine.profile;
         const highestTier = TIERS_CONFIG.find(t => t.id === p.unlockedTier) || TIERS_CONFIG[0];
-        DOM.headerUserTier.textContent = highestTier.tier;
-        DOM.statCurrentTier.textContent = `Lv.${p.unlockedTier}`;
+        const prog = engine.getTierProgress(p.unlockedTier);
+        const subName = ['下級', '中級', '上級', '大圓滿'][Math.min(3, (prog.currentSub || 1) - 1)];
+
+        DOM.headerUserTier.textContent = `${highestTier.tier.split('・')[0]}・${subName}`;
+        DOM.statCurrentTier.textContent = `${highestTier.tier.split('・')[0]}・${subName}`;
 
         let totalStars = 0;
         Object.values(p.tierStars).forEach(s => totalStars += s);
         DOM.statTotalStars.textContent = `${totalStars} ★`;
         DOM.statTotalCorrect.textContent = p.totalCorrect.toLocaleString();
         DOM.statMaxCombo.textContent = `${p.maxCombo} Combo`;
+
+        // 靈獸與每日連勝打卡更新
+        if (p.beast) {
+            const bInfo = engine.getBeastInfo(p.beast.level);
+            const elIcon = document.getElementById('beast-icon');
+            const elName = document.getElementById('beast-name');
+            const elLevel = document.getElementById('beast-level');
+            if (elIcon) elIcon.textContent = bInfo.icon;
+            if (elName) elName.textContent = bInfo.name;
+            if (elLevel) elLevel.textContent = `Lv.${p.beast.level}`;
+        }
+        if (p.streak) {
+            const elStreak = document.getElementById('streak-days');
+            if (elStreak) elStreak.textContent = p.streak.count || 1;
+        }
+
         updateMistakesBadge();
     }
 
-    // 更新錯題紅點徽章
+    // 更新錯題紅點徽章 (護眼柔和光，無劇烈晃動)
     function updateMistakesBadge() {
         const count = Object.keys(engine.profile.mistakes).length;
         if (count > 0) {
@@ -225,19 +245,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const urgent = engine.getMostUrgentMistakeStatus();
             if (urgent && (urgent.isOverdue || urgent.isUrgent)) {
                 DOM.btnOpenMistakes.style.borderColor = 'var(--accent-rose)';
-                DOM.btnOpenMistakes.style.animation = 'shake 2.5s infinite';
+                DOM.btnOpenMistakes.style.boxShadow = '0 0 10px rgba(244, 63, 94, 0.4)';
             } else {
                 DOM.btnOpenMistakes.style.borderColor = 'var(--border-card)';
-                DOM.btnOpenMistakes.style.animation = 'none';
+                DOM.btnOpenMistakes.style.boxShadow = 'none';
             }
         } else {
             DOM.mistakeCountBadge.style.display = 'none';
             DOM.btnOpenMistakes.style.borderColor = 'var(--border-card)';
-            DOM.btnOpenMistakes.style.animation = 'none';
+            DOM.btnOpenMistakes.style.boxShadow = 'none';
         }
     }
 
-    // 生成 9 大關卡卡片
+    // 生成 9 大關卡卡片 (三級三通體系：每階分下級、中級、上級，各需通關 3 次)
     function renderStages() {
         DOM.adventureStagesGrid.innerHTML = '';
         const unlockedTier = engine.profile.unlockedTier;
@@ -246,6 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isUnlocked = cfg.id <= unlockedTier;
             const isCurrent = cfg.id === unlockedTier;
             const stars = engine.profile.tierStars[cfg.id] || 0;
+            const prog = engine.getTierProgress(cfg.id);
 
             const card = document.createElement('div');
             card.className = `stage-card ${isUnlocked ? '' : 'locked'} ${isCurrent ? 'current' : ''}`;
@@ -267,11 +288,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 sensoryClass = 'mix';
             }
 
-            // 嚴苛標準文字
-            let targetText = `${cfg.count} 題 / 正確率 ≥ ${Math.round(cfg.passRate * 100)}%`;
-            if (cfg.id === 9) {
-                targetText = `🔥 100 題 / 正確率 100% (零容錯)`;
+            // 建立 3 個子等級 (下級、中級、上級) 的印章進度
+            let sublevelsHtml = '<div class="stage-sublevels-grid">';
+            for (let s = 1; s <= 3; s++) {
+                const sub = cfg.subLevels[s];
+                const clearCount = prog.clears[s] || 0;
+                const isSubCompleted = clearCount >= 3;
+                const isSubUnlocked = isUnlocked && (s <= (prog.currentSub || 1));
+                const isSubCurrent = isUnlocked && (s === (prog.currentSub || 1));
+
+                let subClass = 'sublevel-card';
+                if (!isSubUnlocked) subClass += ' locked';
+                else if (isSubCompleted) subClass += ' completed';
+                else if (isSubCurrent) subClass += ' active-sub';
+
+                let stampHtml = '';
+                for (let k = 1; k <= 3; k++) {
+                    stampHtml += `<span class="stamp-dot ${k <= clearCount ? 'filled' : ''}"></span>`;
+                }
+
+                let tagText = `${clearCount}/3 次`;
+                if (!isSubUnlocked) tagText = '🔒 鎖定';
+                else if (isSubCompleted) tagText = '✓ 通關';
+
+                sublevelsHtml += `
+                    <div class="${subClass}" data-tier="${cfg.id}" data-sub="${s}" title="${sub.subTitle}: ${sub.count}題 (限時 ${sub.timePerQuestion}s/題)">
+                        <span class="sublevel-title">${sub.name}</span>
+                        <div class="sublevel-stamps">${stampHtml}</div>
+                        <span class="sublevel-tag">${tagText}</span>
+                    </div>
+                `;
             }
+            sublevelsHtml += '</div>';
+
+            const curSubCfg = engine.getSubConfig(cfg.id, Math.min(3, prog.currentSub || 1));
 
             card.innerHTML = `
                 <div>
@@ -285,16 +335,28 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="stage-tier">${cfg.tier}</div>
                     <h3 class="stage-title">${cfg.title}</h3>
                     <p class="stage-desc">${cfg.desc}</p>
+                    ${sublevelsHtml}
                 </div>
                 <div class="stage-footer">
-                    <span>${targetText} (限時 ${cfg.timePerQuestion}s/題)</span>
-                    <span>${isUnlocked ? (stars > 0 ? '✓ 已通關' : '⚡ 挑戰中') : '🔒 未解鎖'}</span>
+                    <span>當前目標：${curSubCfg.subName} (${curSubCfg.count}題 / 限時 ${curSubCfg.timePerQuestion}s)</span>
+                    <button type="button" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.82rem; border-radius: 8px;">
+                        ${isUnlocked ? (prog.currentSub >= 4 ? '🔄 重練' : '⚡ 挑戰') : '🔒 鎖定'}
+                    </button>
                 </div>
             `;
 
             if (isUnlocked) {
-                card.addEventListener('click', () => {
-                    startTierAdventure(cfg.id);
+                card.addEventListener('click', (e) => {
+                    const subTarget = e.target.closest('.sublevel-card');
+                    if (subTarget) {
+                        const targetSub = parseInt(subTarget.dataset.sub, 10);
+                        const isSubUnlocked = targetSub <= (prog.currentSub || 1);
+                        if (isSubUnlocked) {
+                            startTierAdventure(cfg.id, targetSub);
+                            return;
+                        }
+                    }
+                    startTierAdventure(cfg.id, Math.min(3, prog.currentSub || 1));
                 });
             }
 
@@ -421,11 +483,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 3. 遊戲模式啟動
     // ==========================================
-    function startTierAdventure(tierId) {
-        const cfg = engine.getTierConfig(tierId);
+    function startTierAdventure(tierId, subLevel = null) {
+        const prog = engine.getTierProgress(tierId);
+        const activeSub = subLevel !== null ? subLevel : Math.min(3, prog.currentSub || 1);
+        const subCfg = engine.getSubConfig(tierId, activeSub);
+
         state.gameMode = 'tier';
         state.activeTierId = tierId;
-        state.totalQuestionsInRound = cfg.count;
+        state.activeSubLevel = activeSub;
+        state.totalQuestionsInRound = subCfg.count;
         state.currentQuestionIndex = 0;
         state.correctCount = 0;
         state.wrongCount = 0;
@@ -434,7 +500,8 @@ document.addEventListener('DOMContentLoaded', () => {
         state.roundStartTime = Date.now();
         state.inGame = true;
 
-        DOM.arenaModeBadge.textContent = cfg.tier;
+        DOM.arenaModeBadge.textContent = `${subCfg.tierName.split('・')[0]}・${subCfg.subName}`;
+        DOM.arenaModeBadge.title = `${subCfg.tierName} - ${subCfg.subName} (${subCfg.subTitle})`;
         showArena();
         loadNextQuestion();
     }
@@ -534,14 +601,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let q;
         if (state.gameMode === 'tier') {
-            const cfg = engine.getTierConfig(state.activeTierId);
+            const subCfg = engine.getSubConfig(state.activeTierId, state.activeSubLevel);
             q = engine.generateQuestion({
-                factors: cfg.factors,
-                sensoryMode: cfg.sensoryMode,
-                reverseRate: cfg.reverseRate,
-                hardWeight: cfg.hardWeight
+                factors: subCfg.factors,
+                sensoryMode: subCfg.sensoryMode,
+                reverseRate: subCfg.reverseRate,
+                hardWeight: subCfg.hardWeight
             });
-            startPerQuestionTimer(cfg.timePerQuestion);
+            startPerQuestionTimer(subCfg.timePerQuestion);
         } else if (state.gameMode === 'exam_time' || state.gameMode === 'exam_count') {
             q = engine.generateQuestion({
                 factors: [2, 3, 4, 5, 6, 7, 8, 9],
@@ -754,36 +821,62 @@ document.addEventListener('DOMContentLoaded', () => {
         sound.playFanfare();
 
         if (state.gameMode === 'tier') {
-            const cfg = engine.getTierConfig(state.activeTierId);
-            let stars = 0;
+            const subCfg = engine.getSubConfig(state.activeTierId, state.activeSubLevel);
+            const isPassed = accuracy >= subCfg.passRate;
+            const res = engine.recordTierClearance(state.activeTierId, state.activeSubLevel, isPassed);
 
-            if (state.activeTierId === 9) {
-                // 第 9 階：百題零容錯！必須 100% 正確率
-                if (accuracy === 1.0) {
-                    stars = 3;
+            let clearStamps = '';
+            for (let k = 1; k <= 3; k++) {
+                clearStamps += `<span class="stamp-dot ${k <= res.clears ? 'filled' : ''}" style="width:16px; height:16px; display:inline-block; margin:0 4px;"></span>`;
+            }
+
+            if (res.promotedTier) {
+                DOM.modalClearIcon.textContent = '👑';
+                DOM.modalClearTitle.textContent = `🎉 恭喜【${subCfg.tierName}】大圓滿通關！成功晉階！`;
+            } else if (res.promotedSub) {
+                DOM.modalClearIcon.textContent = '🌟';
+                const nextSubName = engine.getSubConfig(state.activeTierId, res.newSub).subName;
+                DOM.modalClearTitle.textContent = `🎉 恭喜達成 3 次通關！成功晉級【${nextSubName}】！`;
+            } else if (isPassed) {
+                DOM.modalClearIcon.textContent = '🏆';
+                DOM.modalClearTitle.textContent = `✨ ${subCfg.fullTitle} 通關成功！(${res.clears}/3 次)`;
+            } else {
+                DOM.modalClearIcon.textContent = '💪';
+                DOM.modalClearTitle.textContent = `${subCfg.fullTitle} 未達標準，再接再厲！`;
+            }
+
+            DOM.modalClearStars.innerHTML = `
+                <div style="font-size:1.05rem; font-weight:800; color:var(--accent-amber); margin-bottom:8px;">修練印記進度 (${res.clears} / 3)</div>
+                <div style="display:flex; justify-content:center; align-items:center; gap:8px;">${clearStamps}</div>
+                <div style="font-size:0.82rem; color:var(--accent-emerald); margin-top:10px; font-weight:700;">✨ 靈獸伴學獲得 +120 EXP！</div>
+            `;
+            DOM.modalClearAccuracy.textContent = `${Math.round(accuracy * 100)}% (合格標準: ${Math.round(subCfg.passRate * 100)}%)`;
+            DOM.modalClearSpeed.textContent = `${avgSpeed}s/題 (限時 ${subCfg.timePerQuestion}s)`;
+
+            if (isPassed) {
+                DOM.btnModalNext.style.display = 'inline-flex';
+                if (res.promotedTier) {
+                    DOM.btnModalNext.textContent = '🏆 挑戰下一階';
+                    DOM.btnModalNext.onclick = () => {
+                        closeModal(DOM.modalStageClear);
+                        startTierAdventure(res.newTier, 1);
+                    };
+                } else if (res.promotedSub) {
+                    DOM.btnModalNext.textContent = '🌟 挑戰下一級';
+                    DOM.btnModalNext.onclick = () => {
+                        closeModal(DOM.modalStageClear);
+                        startTierAdventure(state.activeTierId, res.newSub);
+                    };
+                } else {
+                    DOM.btnModalNext.textContent = `🔄 繼續第 ${res.clears + 1} 次修練`;
+                    DOM.btnModalNext.onclick = () => {
+                        closeModal(DOM.modalStageClear);
+                        startTierAdventure(state.activeTierId, state.activeSubLevel);
+                    };
                 }
             } else {
-                if (accuracy >= cfg.passRate) {
-                    stars = 1;
-                    if (accuracy >= 0.95) stars = 2;
-                    if (accuracy === 1.0) stars = 3;
-                }
+                DOM.btnModalNext.style.display = 'none';
             }
-
-            engine.recordTierResult(state.activeTierId, stars, accuracy, avgSpeed);
-
-            DOM.modalClearIcon.textContent = stars > 0 ? '🏆' : '💪';
-            DOM.modalClearTitle.textContent = stars > 0 ? `${cfg.tier} 挑戰成功！` : `${cfg.tier} 未達通關標準`;
-
-            let starsHtml = '';
-            for (let i = 1; i <= 3; i++) {
-                starsHtml += `<span class="${i <= stars ? 'filled' : ''}">★</span>`;
-            }
-            DOM.modalClearStars.innerHTML = starsHtml;
-            DOM.modalClearAccuracy.textContent = `${Math.round(accuracy * 100)}% (標準: ${Math.round(cfg.passRate * 100)}%)`;
-            DOM.modalClearSpeed.textContent = `${avgSpeed}s/題`;
-
-            DOM.btnModalNext.style.display = (stars > 0 && state.activeTierId < TIERS_CONFIG.length) ? 'inline-flex' : 'none';
 
             openModal(DOM.modalStageClear);
         } else if (state.gameMode === 'exam_time' || state.gameMode === 'exam_count') {
@@ -1060,13 +1153,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         DOM.btnModalRetry.addEventListener('click', () => {
             closeModal(DOM.modalStageClear);
-            startTierAdventure(state.activeTierId);
-        });
-        DOM.btnModalNext.addEventListener('click', () => {
-            closeModal(DOM.modalStageClear);
-            if (state.activeTierId < TIERS_CONFIG.length) {
-                startTierAdventure(state.activeTierId + 1);
-            }
+            startTierAdventure(state.activeTierId, state.activeSubLevel);
         });
 
         DOM.btnCertClose.addEventListener('click', () => {

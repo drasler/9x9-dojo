@@ -22,7 +22,7 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=2.2.0', { updateViaCache: 'none' })
+          navigator.serviceWorker.register('./sw.js?v=2.3.0', { updateViaCache: 'none' })
             .then((reg) => {
               // 主動檢查遠端是否有更新
               reg.update();
@@ -42,7 +42,7 @@
     </script>
 
     <!-- Stylesheets (含版本防快取) -->
-    <link rel="stylesheet" href="css/style.css?v=2.2.0">
+    <link rel="stylesheet" href="css/style.css?v=2.3.0">
 </head>
 <body>
 
@@ -81,6 +81,19 @@
 
         <!-- 3 天錯題未清空降階警告橫幅容器 -->
         <div id="overdue-banner-container"></div>
+
+        <!-- 每日修練打卡與靈獸養成列 -->
+        <div class="gamify-row" id="gamify-bar">
+            <div class="beast-pill" id="beast-status-pill" title="你的乘法伴學靈獸，過關累積經驗升級！">
+                <span id="beast-icon">🥚</span>
+                <span id="beast-name">乘法仙蛋</span>
+                <span id="beast-level" style="font-size:0.75rem; opacity:0.85;">Lv.1</span>
+            </div>
+            <div class="streak-pill" id="streak-status-pill" title="每日登入練習維持修煉火焰！">
+                <span>🔥 連續修練</span>
+                <strong id="streak-days">1</strong> 天
+            </div>
+        </div>
 
         <!-- 個人學習統計概覽 Banner -->
         <section class="stats-banner" aria-label="學習成就統計">
@@ -314,7 +327,7 @@
             <p>9x9 乘法大師 &copy; 2026 ・ 專為大腦肌肉記憶打造的極速乘法訓練系統</p>
             <p style="margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;">
                 <span>支援離線使用 PWA ・ 跨平台響應式佈局</span>
-                <span class="badge" style="background: rgba(99,102,241,0.25); color: #818cf8; border: 1px solid rgba(99,102,241,0.4); padding: 2px 8px; border-radius: 6px; font-size: 0.76rem; font-weight: 700;">v2.2.0 最新版</span>
+                <span class="badge" style="background: rgba(99,102,241,0.25); color: #818cf8; border: 1px solid rgba(99,102,241,0.4); padding: 2px 8px; border-radius: 6px; font-size: 0.76rem; font-weight: 700;">v2.3.0 最新版</span>
                 <button type="button" id="btn-force-refresh" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; cursor: pointer; transition: all 0.2s;" title="清除瀏覽器離線快取並重新載入最新版本">🔄 清除快取重整</button>
             </p>
         </footer>
@@ -464,8 +477,8 @@
     </div>
 
     <!-- 核心腳本載入 (含版本防快取) -->
-    <script src="js/audio.js?v=2.2.0"></script>
-    <script src="js/engine.js?v=2.2.0"></script>
-    <script src="js/app.js?v=2.2.0"></script>
+    <script src="js/audio.js?v=2.3.0"></script>
+    <script src="js/engine.js?v=2.3.0"></script>
+    <script src="js/app.js?v=2.3.0"></script>
 </body>
 </html>

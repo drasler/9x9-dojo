@@ -421,6 +421,7 @@ body.in-arena {
 }
 body.in-arena .mode-tabs,
 body.in-arena .stats-banner,
+body.in-arena .gamify-row,
 body.in-arena #overdue-banner-container,
 body.in-arena .app-footer {
     display: none !important;
@@ -553,14 +554,14 @@ body.in-arena #view-arena {
     letter-spacing: 2px;
     margin-bottom: 16px;
     text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    animation: questionAppear 0.25s ease-out;
+    animation: questionAppear 0.2s ease-out;
 }
 @keyframes questionAppear {
-    0% { transform: scale(0.92); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
+    0% { opacity: 0.3; }
+    100% { opacity: 1; }
 }
 
-/* Answer Display Box */
+/* Answer Display Box (護眼無晃動設計) */
 .answer-display-box {
     width: 220px;
     height: 64px;
@@ -575,7 +576,7 @@ body.in-arena #view-arena {
     color: var(--primary-light);
     margin-bottom: 24px;
     letter-spacing: 4px;
-    transition: var(--transition-smooth);
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
     box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 .answer-display-box.active {
@@ -592,12 +593,8 @@ body.in-arena #view-arena {
     border-color: var(--accent-rose);
     background: rgba(244, 63, 94, 0.15);
     color: var(--accent-rose);
-    animation: shake 0.35s ease-in-out;
-}
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    20%, 60% { transform: translateX(-8px); }
-    40%, 80% { transform: translateX(8px); }
+    box-shadow: 0 0 20px rgba(244, 63, 94, 0.3);
+    /* 護眼無晃動設計：平緩色彩過渡，徹底移除劇烈左右跳動 */
 }
 
 /* Mobile & Touch Virtual Numpad (九宮格鍵盤) */
@@ -1193,7 +1190,8 @@ body.in-arena #view-arena {
     background: rgba(244, 63, 94, 0.2);
     color: var(--accent-rose);
     border-color: var(--accent-rose);
-    animation: shake 2s infinite;
+    /* 護眼無晃動設計 */
+    box-shadow: 0 0 10px rgba(244, 63, 94, 0.4);
 }
 
 .sensory-tag {
@@ -1217,4 +1215,114 @@ body.in-arena #view-arena {
     color: var(--accent-amber);
     border: 1px solid rgba(245, 158, 11, 0.3);
 }
+
+/* ==========================================================================
+   三級三通體系 (Sub-levels 3x3) 與靈獸伴學修練樣式
+   ========================================================================== */
+.stage-sublevels-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin: 12px 0 14px;
+}
+.sublevel-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-card);
+    border-radius: var(--radius-sm);
+    padding: 8px 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+.sublevel-card:hover:not(.locked) {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: var(--primary-light);
+    transform: translateY(-2px);
+}
+.sublevel-card.active-sub {
+    background: rgba(99, 102, 241, 0.25);
+    border-color: var(--primary);
+    box-shadow: 0 0 12px var(--primary-glow);
+}
+.sublevel-card.completed {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.4);
+}
+.sublevel-card.locked {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background: rgba(0, 0, 0, 0.2);
+}
+.sublevel-title {
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+.sublevel-stamps {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+}
+.stamp-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid var(--border-card);
+}
+.stamp-dot.filled {
+    background: var(--accent-amber);
+    box-shadow: 0 0 6px var(--accent-amber-glow);
+    border-color: var(--accent-amber);
+}
+.sublevel-tag {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+}
+
+/* 靈獸與每日修練 (Gamification Bar) */
+.gamify-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+.beast-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(245, 158, 11, 0.12);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--accent-amber);
+    cursor: pointer;
+    transition: var(--transition-smooth);
+}
+.beast-pill:hover {
+    background: rgba(245, 158, 11, 0.22);
+    transform: scale(1.02);
+}
+.streak-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.84rem;
+    font-weight: 800;
+    color: #f87171;
+}
+
 

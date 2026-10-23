@@ -1,10 +1,13 @@
 /**
  * 9x9 乘法大師 - 核心引擎與分級邏輯 (Core Engine & Leveling Progression)
- * 國小四年級以上高強度版：
+ * 國小四年級以上高強度特化版本：
  * 1. 全階 1~9 階皆採用 2~9 全段乘法。
- * 2. 難度大幅升級：9階為 100 題 / 正確率 100% (零失誤)，往下類推。
- * 3. 視覺讀寫 (Reading) 與聽力聽寫 (Dictation) 分階分離。
- * 4. 錯題復習限時 3 天 (72 小時)，逾期未清空觸發降階懲罰。
+ * 2. 階級提升體系（三級三通）：每一階均劃分為「下級、中級、上級」三個小等級，
+ *    每一級皆須過關 3 次（累積 3 顆修練印章 ●●●）才能晉升至下一級，上級過關 3 次方可晉階！
+ * 3. 低階時間限制放寬（一階下級 8.0秒、中級 7.0秒、上級 6.0秒），建立兒童心算自信與扎實基礎。
+ * 4. 視覺讀寫 (Reading) 與聽力聽寫 (Dictation) 分階分離。
+ * 5. 靈獸伴學夥伴養成系統（仙蛋 -> 靈狐 -> 獵豹 -> 神龍）與每日連續修練打卡 (Streak)。
+ * 6. 錯題復習限時 3 天 (72 小時)，逾期未清空觸發降階懲罰。
  */
 
 // 經典高頻易錯題目列表 (國小高年級失誤率最高的乘法陷阱)
@@ -18,35 +21,39 @@ const HARD_PAIRS = [
 // 3 天過期毫秒數 (3 days = 72 hours)
 const MISTAKE_DEADLINE_MS = 3 * 24 * 60 * 60 * 1000;
 
-// 九段階級晉升體系 (全階 2~9，專為小四以上設計的高強度梯隊)
+// 九段階級晉升體系 (三級三通：每階分下級、中級、上級，各需通關 3 次)
 const TIERS_CONFIG = [
     {
         id: 1,
         tier: '一階・初試鋒芒',
         title: '全表讀寫基礎 (2~9)',
-        desc: '視覺讀寫題，掌握全域乘法快速反應',
+        desc: '視覺讀寫題，掌握全域乘法快速反應，充裕時間建立心算直覺',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
-        count: 20,
-        timePerQuestion: 4.5, // 每題限時 (秒)
-        passRate: 0.85,       // 通關標準：至少答對 17/20 題 (85%)
-        sensoryMode: 'reading', // 讀寫模式
+        sensoryMode: 'reading',
         reverseRate: 0,
         hardWeight: 0.15,
-        badge: '🌱'
+        badge: '🌱',
+        subLevels: {
+            1: { name: '下級', subTitle: '初修篇', count: 15, timePerQuestion: 8.0, passRate: 0.80 },
+            2: { name: '中級', subTitle: '精進篇', count: 18, timePerQuestion: 7.0, passRate: 0.85 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 20, timePerQuestion: 6.0, passRate: 0.85 }
+        }
     },
     {
         id: 2,
         tier: '二階・穩紮穩打',
         title: '極速讀寫進階 (2~9)',
-        desc: '題數增加、作答時間縮短，強化抗壓連續作答',
+        desc: '題數增加、時間逐步微調，強化抗壓連續心算肌肉記憶',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
-        count: 30,
-        timePerQuestion: 4.0,
-        passRate: 0.88,       // 至少答對 27/30 題 (88%)
         sensoryMode: 'reading',
         reverseRate: 0,
         hardWeight: 0.25,
-        badge: '🌿'
+        badge: '🌿',
+        subLevels: {
+            1: { name: '下級', subTitle: '初修篇', count: 18, timePerQuestion: 7.0, passRate: 0.85 },
+            2: { name: '中級', subTitle: '精進篇', count: 24, timePerQuestion: 6.2, passRate: 0.88 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 30, timePerQuestion: 5.5, passRate: 0.88 }
+        }
     },
     {
         id: 3,
@@ -54,13 +61,15 @@ const TIERS_CONFIG = [
         title: '魔王陷阱爆破 (2~9)',
         desc: '大幅提升 7x8, 6x7, 8x9 等國小最高頻易錯題出題比重',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
-        count: 40,
-        timePerQuestion: 3.6,
-        passRate: 0.90,       // 至少答對 36/40 題 (90%)
         sensoryMode: 'reading',
         reverseRate: 0,
-        hardWeight: 0.55,     // 55% 機率抽選高頻易錯題
-        badge: '⚔️'
+        hardWeight: 0.55,
+        badge: '⚔️',
+        subLevels: {
+            1: { name: '下級', subTitle: '初修篇', count: 20, timePerQuestion: 6.0, passRate: 0.88 },
+            2: { name: '中級', subTitle: '精進篇', count: 28, timePerQuestion: 5.2, passRate: 0.90 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 35, timePerQuestion: 4.5, passRate: 0.90 }
+        }
     },
     {
         id: 4,
@@ -68,13 +77,15 @@ const TIERS_CONFIG = [
         title: '除法思維逆推 (2~9)',
         desc: '視覺逆向題（例如 7 × ? = 56），銜接國小高年級因數與除法心算',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
-        count: 50,
-        timePerQuestion: 3.3,
-        passRate: 0.92,       // 至少答對 46/50 題 (92%)
         sensoryMode: 'reading',
-        reverseRate: 0.50,    // 50% 機率逆向填空
+        reverseRate: 0.50,
         hardWeight: 0.35,
-        badge: '🔮'
+        badge: '🔮',
+        subLevels: {
+            1: { name: '下級', subTitle: '初修篇', count: 24, timePerQuestion: 5.5, passRate: 0.90 },
+            2: { name: '中級', subTitle: '精進篇', count: 32, timePerQuestion: 4.8, passRate: 0.90 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 40, timePerQuestion: 4.2, passRate: 0.92 }
+        }
     },
     {
         id: 5,
@@ -82,13 +93,15 @@ const TIERS_CONFIG = [
         title: '聽力盲測初探 (2~9)',
         desc: '視覺與聽寫交替！螢幕隱藏算式，純聽口訣「七乘八」盲測秒答',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
-        count: 60,
-        timePerQuestion: 3.0,
-        passRate: 0.94,       // 至少答對 57/60 題 (94%)
-        sensoryMode: 'mix',   // 50% 聽寫 + 50% 讀寫
+        sensoryMode: 'mix',
         reverseRate: 0.2,
         hardWeight: 0.35,
-        badge: '🎧'
+        badge: '🎧',
+        subLevels: {
+            1: { name: '下級', subTitle: '初修篇', count: 25, timePerQuestion: 5.0, passRate: 0.90 },
+            2: { name: '中級', subTitle: '精進篇', count: 35, timePerQuestion: 4.5, passRate: 0.92 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 45, timePerQuestion: 4.0, passRate: 0.94 }
+        }
     },
     {
         id: 6,
@@ -96,13 +109,15 @@ const TIERS_CONFIG = [
         title: '全聽力聽寫盲測 (2~9)',
         desc: '100% 聽寫題！完全依靠耳朵聽音與大腦聽覺記憶秒按數字',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
-        count: 70,
-        timePerQuestion: 2.8,
-        passRate: 0.96,       // 至少答對 68/70 題 (96%)
-        sensoryMode: 'dictation', // 100% 純聽寫
+        sensoryMode: 'dictation',
         reverseRate: 0,
         hardWeight: 0.4,
-        badge: '⚡'
+        badge: '⚡',
+        subLevels: {
+            1: { name: '下級', subTitle: '初修篇', count: 30, timePerQuestion: 4.2, passRate: 0.92 },
+            2: { name: '中級', subTitle: '精進篇', count: 45, timePerQuestion: 3.8, passRate: 0.94 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 60, timePerQuestion: 3.5, passRate: 0.96 }
+        }
     },
     {
         id: 7,
@@ -110,41 +125,47 @@ const TIERS_CONFIG = [
         title: '聽覺逆向除法 (2~9)',
         desc: '聽寫逆向題（「幾乘八等於五十六」），純靠聽音進行逆向推導',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
-        count: 80,
-        timePerQuestion: 2.5,
-        passRate: 0.98,       // 至少答對 79/80 題 (98%，最多錯1題)
         sensoryMode: 'dictation',
-        reverseRate: 0.6,     // 60% 聽寫逆向
+        reverseRate: 0.6,
         hardWeight: 0.45,
-        badge: '🔥'
+        badge: '🔥',
+        subLevels: {
+            1: { name: '下級', subTitle: '初修篇', count: 40, timePerQuestion: 3.8, passRate: 0.94 },
+            2: { name: '中級', subTitle: '精進篇', count: 55, timePerQuestion: 3.5, passRate: 0.96 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 70, timePerQuestion: 3.0, passRate: 0.98 }
+        }
     },
     {
         id: 8,
         tier: '八階・雙模狂暴',
         title: '極限雙模大亂鬥 (2~9)',
-        desc: '每題 2.2 秒！讀寫逆向與聽寫盲測隨機混跳，極限刺激',
+        desc: '讀寫逆向與聽寫盲測隨機混跳，極限刺激',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
-        count: 90,
-        timePerQuestion: 2.2,
-        passRate: 0.99,       // 至少答對 90/90 或 89/90 (99%)
         sensoryMode: 'mix',
         reverseRate: 0.5,
         hardWeight: 0.5,
-        badge: '🌪️'
+        badge: '🌪️',
+        subLevels: {
+            1: { name: '下級', subTitle: '初修篇', count: 50, timePerQuestion: 3.0, passRate: 0.96 },
+            2: { name: '中級', subTitle: '精進篇', count: 65, timePerQuestion: 2.6, passRate: 0.98 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 80, timePerQuestion: 2.3, passRate: 0.98 }
+        }
     },
     {
         id: 9,
         tier: '九階・巔峰大宗師',
         title: '百題零容錯極致考核',
-        desc: '連續 100 題！2.0秒極限反射，正確率必須為 100%！錯一題即淘汰',
+        desc: '百題 100% 正確率考核！錯一題即淘汰，唯有大宗師方能登頂',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
-        count: 100,           // 100 題
-        timePerQuestion: 2.0, // 每題 2.0 秒
-        passRate: 1.00,       // 100% 正確率！零失誤
-        sensoryMode: 'mix',   // 聽寫 + 讀寫 + 逆向全域混合
+        sensoryMode: 'mix',
         reverseRate: 0.4,
         hardWeight: 0.4,
-        badge: '👑'
+        badge: '👑',
+        subLevels: {
+            1: { name: '下級', subTitle: '初修篇', count: 50, timePerQuestion: 2.5, passRate: 1.00 },
+            2: { name: '中級', subTitle: '精進篇', count: 75, timePerQuestion: 2.2, passRate: 1.00 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 100, timePerQuestion: 2.0, passRate: 1.00 }
+        }
     }
 ];
 
@@ -160,24 +181,49 @@ class MultiplicationEngine {
     // 載入本地記錄
     loadProfile() {
         const defaultProfile = {
-            unlockedTier: 1,      // 當前解鎖最高階級
+            unlockedTier: 1,      // 當前解鎖最高階級 (1~9)
+            tierProgress: {},     // 三級三通進度 { 1: { currentSub: 1, clears: { 1:0, 2:0, 3:0 } } }
             tierStars: {},        // 各階級獲得星星數 { 1: 3, 2: 2, ... }
             totalSolved: 0,
             totalCorrect: 0,
             totalWrong: 0,
             maxCombo: 0,
-            mistakes: {},         // 錯題本 { "7x8": { q: "7 X 8", a: 56, count: 2, createdAt: 1234567, deadline: 1234567 } }
+            mistakes: {},         // 錯題本
             certificates: [],
+            streak: { count: 0, lastDate: '' }, // 每日連續修練打卡
+            beast: { exp: 0, level: 1 },         // 靈獸夥伴養成
             lastDemoteCheck: Date.now()
         };
 
         try {
             const raw = localStorage.getItem(this.storageKey);
             if (raw) {
-                return Object.assign(defaultProfile, JSON.parse(raw));
+                const loaded = Object.assign(defaultProfile, JSON.parse(raw));
+                // 確保 tierProgress 結構完整
+                if (!loaded.tierProgress) loaded.tierProgress = {};
+                for (let t = 1; t <= 9; t++) {
+                    if (!loaded.tierProgress[t]) {
+                        const isFullyCleared = t < loaded.unlockedTier;
+                        loaded.tierProgress[t] = {
+                            currentSub: isFullyCleared ? 4 : 1,
+                            clears: { 1: isFullyCleared ? 3 : 0, 2: isFullyCleared ? 3 : 0, 3: isFullyCleared ? 3 : 0 }
+                        };
+                    }
+                }
+                if (!loaded.streak) loaded.streak = { count: 0, lastDate: '' };
+                if (!loaded.beast) loaded.beast = { exp: 0, level: 1 };
+                return loaded;
             }
         } catch (e) {
             console.warn('無法讀取 LocalStorage:', e);
+        }
+
+        // 初始化全新進度
+        for (let t = 1; t <= 9; t++) {
+            defaultProfile.tierProgress[t] = {
+                currentSub: t === 1 ? 1 : 1,
+                clears: { 1: 0, 2: 0, 3: 0 }
+            };
         }
         return defaultProfile;
     }
@@ -192,8 +238,176 @@ class MultiplicationEngine {
     }
 
     /**
+     * 取得指定階級的三級三通進度
+     */
+    getTierProgress(tierId) {
+        if (!this.profile.tierProgress) {
+            this.profile.tierProgress = {};
+        }
+        if (!this.profile.tierProgress[tierId]) {
+            const isFullyCleared = tierId < this.profile.unlockedTier;
+            this.profile.tierProgress[tierId] = {
+                currentSub: isFullyCleared ? 4 : 1,
+                clears: { 1: isFullyCleared ? 3 : 0, 2: isFullyCleared ? 3 : 0, 3: isFullyCleared ? 3 : 0 }
+            };
+        }
+        return this.profile.tierProgress[tierId];
+    }
+
+    /**
+     * 取得指定階級與子等級 (1:下級, 2:中級, 3:上級) 的出題規格
+     */
+    getSubConfig(tierId, subLevel = 1) {
+        const tierCfg = this.getTierConfig(tierId);
+        const sub = tierCfg.subLevels[subLevel] || tierCfg.subLevels[1];
+        return {
+            tierId,
+            tierName: tierCfg.tier,
+            subLevel,
+            subName: sub.name,
+            subTitle: sub.subTitle,
+            fullTitle: `${tierCfg.tier}・${sub.name}`,
+            count: sub.count,
+            timePerQuestion: sub.timePerQuestion,
+            passRate: sub.passRate,
+            factors: tierCfg.factors,
+            sensoryMode: tierCfg.sensoryMode,
+            reverseRate: tierCfg.reverseRate,
+            hardWeight: tierCfg.hardWeight,
+            badge: tierCfg.badge
+        };
+    }
+
+    /**
+     * 記錄子等級挑戰結果 (達成合格率通關時 +1，滿 3 次晉級)
+     */
+    recordTierClearance(tierId, subLevel, isPassed) {
+        const prog = this.getTierProgress(tierId);
+        let promotedSub = false;
+        let promotedTier = false;
+
+        if (isPassed) {
+            prog.clears[subLevel] = Math.min(3, (prog.clears[subLevel] || 0) + 1);
+
+            // 若該小等級已成功通關 3 次
+            if (prog.clears[subLevel] >= 3) {
+                if (subLevel < 3) {
+                    if (prog.currentSub <= subLevel) {
+                        prog.currentSub = subLevel + 1;
+                        promotedSub = true;
+                    }
+                } else if (subLevel === 3) {
+                    // 上級通關 3 次 -> 該階大圓滿！解鎖下一階
+                    prog.currentSub = 4;
+                    if (this.profile.unlockedTier <= tierId && tierId < TIERS_CONFIG.length) {
+                        this.profile.unlockedTier = tierId + 1;
+                        promotedTier = true;
+                    }
+                }
+            }
+
+            // 更新星級：通過下級=1星、中級=2星、上級=3星
+            let stars = 0;
+            if (prog.clears[1] >= 3) stars++;
+            if (prog.clears[2] >= 3) stars++;
+            if (prog.clears[3] >= 3) stars++;
+            this.profile.tierStars[tierId] = stars;
+
+            // 獎勵靈獸 EXP：每次通關獲得 120 EXP
+            this.addBeastExp(120);
+
+            // 更新每日修練連勝打卡
+            this.updateDailyStreak();
+
+            this.saveProfile();
+        }
+
+        return {
+            prog,
+            clears: prog.clears[subLevel],
+            targetClears: 3,
+            promotedSub,
+            promotedTier,
+            newSub: prog.currentSub,
+            newTier: this.profile.unlockedTier
+        };
+    }
+
+    /**
+     * 每日連續修練打卡 (Streak)
+     */
+    updateDailyStreak() {
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+        
+        if (!this.profile.streak) {
+            this.profile.streak = { count: 0, lastDate: '' };
+        }
+        
+        const streak = this.profile.streak;
+        if (streak.lastDate === todayStr) {
+            return { streakCount: streak.count, isNewDay: false };
+        }
+
+        if (streak.lastDate) {
+            const last = new Date(streak.lastDate);
+            const diffDays = Math.round((now - last) / (1000 * 3600 * 24));
+            if (diffDays === 1) {
+                streak.count++;
+            } else if (diffDays > 1) {
+                streak.count = 1;
+            }
+        } else {
+            streak.count = 1;
+        }
+
+        streak.lastDate = todayStr;
+        this.saveProfile();
+        return { streakCount: streak.count, isNewDay: true };
+    }
+
+    /**
+     * 靈獸伴學夥伴養成系統 (EXP 與等級成長)
+     */
+    addBeastExp(expAmount) {
+        if (!this.profile.beast) {
+            this.profile.beast = { exp: 0, level: 1 };
+        }
+        const b = this.profile.beast;
+        b.exp += expAmount;
+        
+        let leveledUp = false;
+        let nextLevelExp = b.level * 150;
+        while (b.exp >= nextLevelExp && b.level < 30) {
+            b.exp -= nextLevelExp;
+            b.level++;
+            nextLevelExp = b.level * 150;
+            leveledUp = true;
+        }
+        this.saveProfile();
+        return {
+            level: b.level,
+            exp: b.exp,
+            maxExp: b.level * 150,
+            leveledUp,
+            beastInfo: this.getBeastInfo(b.level)
+        };
+    }
+
+    getBeastInfo(level) {
+        if (level < 4) {
+            return { name: '乘法仙蛋', icon: '🥚', title: '初生靈卵・蘊育心算潛能' };
+        } else if (level < 9) {
+            return { name: '火靈狐', icon: '🦊', title: '機敏伶俐・直覺反應倍增' };
+        } else if (level < 16) {
+            return { name: '疾風獵豹', icon: '🐆', title: '迅疾如風・秒答百步穿楊' };
+        } else {
+            return { name: '九天神龍', icon: '🐉', title: '乘法大宗師・通天霸氣修為' };
+        }
+    }
+
+    /**
      * 檢查錯題是否超過 3 天 (72 小時) 期限
-     * 若有任何錯題逾期未清空，執行降階懲罰 (unlockedTier - 1，最低為 1)
      */
     checkMistakesOverdue() {
         const now = Date.now();
@@ -204,7 +418,6 @@ class MultiplicationEngine {
         let overdueCount = 0;
         keys.forEach(k => {
             const item = mistakes[k];
-            // 若為舊格式無 deadline，自動補上 3 天期限
             if (!item.deadline) {
                 item.createdAt = item.createdAt || now;
                 item.deadline = item.createdAt + MISTAKE_DEADLINE_MS;
@@ -223,7 +436,6 @@ class MultiplicationEngine {
                 demoted = true;
             }
 
-            // 延長逾期錯題的 deadline 另外 3 天，避免每次刷新連續降階至 1
             keys.forEach(k => {
                 if (now > mistakes[k].deadline) {
                     mistakes[k].deadline = now + MISTAKE_DEADLINE_MS;
@@ -282,12 +494,11 @@ class MultiplicationEngine {
             isOverdue: false,
             remainingMs: minRemainingMs,
             text,
-            isUrgent: minRemainingMs < 24 * 60 * 60 * 1000 // 少於 24 小時視為緊急
+            isUrgent: minRemainingMs < 24 * 60 * 60 * 1000
         };
     }
 
     // 生成題目
-    // options: { factors, sensoryMode: 'reading'|'dictation'|'mix', reverseRate, hardWeight, mode, seqIndex }
     generateQuestion(options = {}) {
         const reverseRate = options.reverseRate || 0;
         const isReverse = Math.random() < reverseRate;
@@ -307,7 +518,6 @@ class MultiplicationEngine {
         let factorA, factorB;
 
         if (useHard) {
-            // 從高頻易錯庫隨機抽選，避開最近題目
             let attempts = 0;
             let pair;
             do {
@@ -318,109 +528,84 @@ class MultiplicationEngine {
             factorA = pair[0];
             factorB = pair[1];
         } else if (options.mode === 'sequence') {
-            const availableFactors = options.factors && options.factors.length > 0 ? options.factors : [2,3,4,5,6,7,8,9];
-            const baseIndex = options.seqIndex || 0;
-            const factorIndex = Math.floor(baseIndex / 9) % availableFactors.length;
-            const multiplier = (baseIndex % 9) + 1;
-            factorA = availableFactors[factorIndex];
-            factorB = multiplier;
+            const factors = options.factors || [2, 3, 4, 5, 6, 7, 8, 9];
+            factorA = factors[0];
+            const seq = (options.seqIndex !== undefined ? options.seqIndex : 0) % 8;
+            factorB = [2, 3, 4, 5, 6, 7, 8, 9][seq];
         } else {
-            const availableFactors = options.factors && options.factors.length > 0 ? options.factors : [2,3,4,5,6,7,8,9];
+            const factors = options.factors || [2, 3, 4, 5, 6, 7, 8, 9];
             let attempts = 0;
             do {
-                factorA = availableFactors[Math.floor(Math.random() * availableFactors.length)];
+                factorA = factors[Math.floor(Math.random() * factors.length)];
                 factorB = Math.floor(Math.random() * 8) + 2; // 2 ~ 9
                 attempts++;
             } while (this.recentQuestions.includes(`${factorA}x${factorB}`) && attempts < 10);
         }
 
+        // 記錄最近出題
         this.recentQuestions.push(`${factorA}x${factorB}`);
         if (this.recentQuestions.length > 8) {
             this.recentQuestions.shift();
         }
 
         const product = factorA * factorB;
-        let questionText = '';
-        let targetAnswer = 0;
-        let isFillA = false;
-        let isFillB = false;
+        let questionText, targetAnswer, isFillA = false;
 
         if (isReverse) {
-            // 逆向填空題: ? x B = C 或 A x ? = C
-            if (Math.random() < 0.5) {
+            isFillA = Math.random() < 0.5;
+            if (isFillA) {
                 questionText = `? × ${factorB} = ${product}`;
                 targetAnswer = factorA;
-                isFillA = true;
             } else {
                 questionText = `${factorA} × ? = ${product}`;
                 targetAnswer = factorB;
-                isFillB = true;
             }
         } else {
-            // 正向題目: A x B = ?
             questionText = `${factorA} × ${factorB}`;
             targetAnswer = product;
         }
 
-        this.questionStartTime = Date.now();
         this.currentQuestion = {
             factorA,
             factorB,
             product,
-            questionText,
-            targetAnswer,
             isReverse,
             isFillA,
-            isFillB,
-            isDictation, // 是否為聽寫題 (畫面上隱藏算式，純聽語音)
-            rawKey: `${factorA}x${factorB}`
+            isDictation,
+            questionText,
+            targetAnswer
         };
 
+        this.questionStartTime = Date.now();
         return this.currentQuestion;
     }
 
-    // 檢查作答結果
-    checkAnswer(userAns) {
+    // 檢查答案
+    checkAnswer(userAnswer) {
         if (!this.currentQuestion) return { isCorrect: false };
 
-        const numericAns = parseInt(userAns, 10);
+        const numericAns = parseInt(userAnswer, 10);
         const isCorrect = numericAns === this.currentQuestion.targetAnswer;
-        const timeSpent = Math.max(0.1, (Date.now() - this.questionStartTime) / 1000);
-        const now = Date.now();
+        const timeTakenMs = Date.now() - this.questionStartTime;
 
         this.profile.totalSolved++;
         if (isCorrect) {
             this.profile.totalCorrect++;
-            const rawKey = this.currentQuestion.rawKey;
-            if (this.profile.mistakes[rawKey]) {
-                this.profile.mistakes[rawKey].correctAfterFail = (this.profile.mistakes[rawKey].correctAfterFail || 0) + 1;
-                // 連續答對 2 次後自錯題本畢業移除
-                if (this.profile.mistakes[rawKey].correctAfterFail >= 2) {
-                    delete this.profile.mistakes[rawKey];
+            this.profile.maxCombo = Math.max(this.profile.maxCombo, 1);
+            // 答對獲得 8 點靈獸 EXP
+            this.addBeastExp(8);
+
+            // 若在錯題本中，答對減少錯誤計數或移除
+            const qKey = `${this.currentQuestion.factorA}x${this.currentQuestion.factorB}`;
+            if (this.profile.mistakes[qKey]) {
+                this.profile.mistakes[qKey].count--;
+                if (this.profile.mistakes[qKey].count <= 0) {
+                    delete this.profile.mistakes[qKey];
                 }
             }
         } else {
             this.profile.totalWrong++;
-            const rawKey = this.currentQuestion.rawKey;
-            if (!this.profile.mistakes[rawKey]) {
-                this.profile.mistakes[rawKey] = {
-                    factorA: this.currentQuestion.factorA,
-                    factorB: this.currentQuestion.factorB,
-                    product: this.currentQuestion.product,
-                    qText: `${this.currentQuestion.factorA} × ${this.currentQuestion.factorB} = ${this.currentQuestion.product}`,
-                    count: 1,
-                    lastWrongAnswer: userAns,
-                    correctAfterFail: 0,
-                    createdAt: now,
-                    deadline: now + MISTAKE_DEADLINE_MS // 3 天復習時效
-                };
-            } else {
-                this.profile.mistakes[rawKey].count++;
-                this.profile.mistakes[rawKey].lastWrongAnswer = userAns;
-                this.profile.mistakes[rawKey].correctAfterFail = 0;
-                // 再次失誤重置 3 天計時
-                this.profile.mistakes[rawKey].deadline = now + MISTAKE_DEADLINE_MS;
-            }
+            this.recordMistake(this.currentQuestion.factorA, this.currentQuestion.factorB);
         }
 
         this.saveProfile();
@@ -428,35 +613,39 @@ class MultiplicationEngine {
         return {
             isCorrect,
             targetAnswer: this.currentQuestion.targetAnswer,
-            timeSpent,
+            timeTakenMs,
             question: this.currentQuestion
         };
     }
 
-    // 記錄段位過關成績
-    recordTierResult(tierId, stars, accuracy, avgTime) {
-        if (!this.profile.tierStars[tierId] || stars > this.profile.tierStars[tierId]) {
-            this.profile.tierStars[tierId] = stars;
+    // 記錄錯題 (自建 3 天 deadline)
+    recordMistake(factorA, factorB) {
+        const key = `${factorA}x${factorB}`;
+        const now = Date.now();
+        if (this.profile.mistakes[key]) {
+            this.profile.mistakes[key].count++;
+            this.profile.mistakes[key].lastWrongAt = now;
+            this.profile.mistakes[key].deadline = now + MISTAKE_DEADLINE_MS;
+        } else {
+            this.profile.mistakes[key] = {
+                factorA,
+                factorB,
+                text: `${factorA} × ${factorB}`,
+                answer: factorA * factorB,
+                count: 1,
+                createdAt: now,
+                deadline: now + MISTAKE_DEADLINE_MS
+            };
         }
-
-        // 若成功獲得至少 1 顆星，且此關是當前最高關，解鎖下一關
-        if (stars > 0 && tierId === this.profile.unlockedTier && tierId < TIERS_CONFIG.length) {
-            this.profile.unlockedTier = tierId + 1;
-        }
-
         this.saveProfile();
-        return {
-            unlockedNext: this.profile.unlockedTier > tierId,
-            newUnlockedTier: this.profile.unlockedTier
-        };
     }
 
-    // 取得所有錯題陣列 (依期限與錯誤次數排序)
+    // 取得所有錯題陣列
     getMistakesList() {
         return Object.values(this.profile.mistakes).sort((a, b) => {
             const deadA = a.deadline || 0;
             const deadB = b.deadline || 0;
-            return deadA - deadB; // 越急迫的排在最前
+            return deadA - deadB;
         });
     }
 
