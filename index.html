@@ -37,33 +37,31 @@
         <header class="top-nav" role="banner">
             <div class="brand" id="btn-brand-home" title="返回主頁面">
                 <div class="brand-icon">✖️</div>
-                <div>
-                    <h1 class="brand-title">9x9 乘法大師</h1>
-                </div>
-                <span class="brand-badge" id="header-user-tier">一階・初出茅廬</span>
+                <h1 class="brand-title">9x9 乘法大師</h1>
+                <span class="brand-badge hide-on-mobile" id="header-user-tier">一階・初試鋒芒</span>
             </div>
 
             <nav class="nav-actions" aria-label="工具設定">
                 <button type="button" class="icon-btn" id="btn-toggle-sound" title="切換音效 (開/關)" aria-label="切換音效">🔊</button>
                 <button type="button" class="icon-btn" id="btn-toggle-voice" title="切換真人語音朗讀口訣" aria-label="切換語音朗讀">🗣️</button>
                 <button type="button" class="icon-btn" id="btn-open-chart" title="九九乘法對照表" aria-label="開啟九九乘法對照表">📖</button>
-                <button type="button" class="icon-btn" id="btn-open-mistakes" title="錯題復習本" aria-label="開啟錯題本">
+                <button type="button" class="icon-btn" id="btn-open-mistakes" title="錯題復習本" aria-label="開啟錯題本" style="position:relative;">
                     📕 <span id="mistake-count-badge" style="display:none; position:absolute; top:-2px; right:-2px; background:var(--accent-rose); color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; font-weight:bold; align-items:center; justify-content:center;">0</span>
                 </button>
                 <button type="button" class="icon-btn" id="btn-toggle-theme" title="切換深色/淺色主題" aria-label="切換主題">🌓</button>
             </nav>
         </header>
 
-        <!-- 模式切換頁籤 -->
+        <!-- 模式切換頁籤 (響應式防折行設計) -->
         <nav class="mode-tabs" role="tablist" id="main-mode-tabs">
             <button type="button" class="mode-tab active" data-mode="adventure" role="tab" id="tab-adventure" aria-selected="true">
-                🏆 階級天梯闖關
+                🏆 <span class="tab-text">天梯闖關</span>
             </button>
             <button type="button" class="mode-tab" data-mode="exam" role="tab" id="tab-exam" aria-selected="false">
-                ⏱️ 隨機檢定考試
+                ⏱️ <span class="tab-text">檢定考試</span>
             </button>
             <button type="button" class="mode-tab" data-mode="practice" role="tab" id="tab-practice" aria-selected="false">
-                🎯 自由專項特訓
+                🎯 <span class="tab-text">自由特訓</span>
             </button>
         </nav>
 
@@ -125,10 +123,19 @@
                     <label style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 8px;">
                         測驗時間：
                     </label>
-                    <div style="display: flex; gap: 10px;">
-                        <button type="button" class="btn btn-secondary flex-1 exam-opt-btn active" data-val="60" style="flex:1;">60 秒 (急速)</button>
-                        <button type="button" class="btn btn-secondary flex-1 exam-opt-btn" data-val="120" style="flex:1;">120 秒 (標準)</button>
-                        <button type="button" class="btn btn-secondary flex-1 exam-opt-btn" data-val="180" style="flex:1;">180 秒 (充裕)</button>
+                    <div class="exam-btn-grid">
+                        <button type="button" class="btn btn-secondary exam-opt-btn active" data-val="60">
+                            <span class="opt-val">60 秒</span>
+                            <span class="opt-tag">急速挑戰</span>
+                        </button>
+                        <button type="button" class="btn btn-secondary exam-opt-btn" data-val="120">
+                            <span class="opt-val">120 秒</span>
+                            <span class="opt-tag">標準檢定</span>
+                        </button>
+                        <button type="button" class="btn btn-secondary exam-opt-btn" data-val="180">
+                            <span class="opt-val">180 秒</span>
+                            <span class="opt-tag">充裕思考</span>
+                        </button>
                     </div>
                 </div>
 
@@ -136,10 +143,19 @@
                     <label style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 8px;">
                         題數規模：
                     </label>
-                    <div style="display: flex; gap: 10px;">
-                        <button type="button" class="btn btn-secondary flex-1 exam-count-btn active" data-val="20" style="flex:1;">20 題 (快篩)</button>
-                        <button type="button" class="btn btn-secondary flex-1 exam-count-btn" data-val="40" style="flex:1;">40 題 (標準)</button>
-                        <button type="button" class="btn btn-secondary flex-1 exam-count-btn" data-val="81" style="flex:1;">81 題 (全表挑戰)</button>
+                    <div class="exam-btn-grid">
+                        <button type="button" class="btn btn-secondary exam-count-btn active" data-val="20">
+                            <span class="opt-val">20 題</span>
+                            <span class="opt-tag">極速快篩</span>
+                        </button>
+                        <button type="button" class="btn btn-secondary exam-count-btn" data-val="40">
+                            <span class="opt-val">40 題</span>
+                            <span class="opt-tag">標準段位</span>
+                        </button>
+                        <button type="button" class="btn btn-secondary exam-count-btn" data-val="81">
+                            <span class="opt-val">81 題</span>
+                            <span class="opt-tag">全表大考</span>
+                        </button>
                     </div>
                 </div>
 
@@ -360,17 +376,41 @@
     <div class="modal-overlay" id="modal-chart">
         <div class="modal-box" style="max-width: 650px;">
             <div class="modal-header">
-                <h3 class="modal-title">📖 九九乘法口訣對照表</h3>
+                <h3 class="modal-title">📖 九九乘法口訣表</h3>
                 <button type="button" class="modal-close" id="btn-close-chart">&times;</button>
             </div>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
-                點擊任意格子可即時發音並高亮對應行列，助於掌握乘法口訣記憶：
-            </p>
-            <div class="mult-table-wrap">
-                <table class="mult-table" id="interactive-mult-table">
-                    <!-- 由 JavaScript 動態生成 9x9 表格 -->
-                </table>
+
+            <!-- 查閱模式切換：全矩陣 vs 單數大字卡 -->
+            <div style="display: flex; gap: 8px; margin-bottom: 14px;">
+                <button type="button" class="btn btn-secondary btn-sm flex-1 active" id="tab-chart-matrix" style="flex:1;">📊 完整 9×9 矩陣</button>
+                <button type="button" class="btn btn-secondary btn-sm flex-1" id="tab-chart-cards" style="flex:1;">📱 單段口訣卡</button>
             </div>
+
+            <!-- 視圖 A: 完整 9x9 矩陣 (100% 寬度適配，杜絕破版切邊) -->
+            <div id="chart-view-matrix">
+                <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 10px;">
+                    點擊任意格子可即時發音，直向橫向完整呈現：
+                </p>
+                <div class="mult-table-wrap">
+                    <table class="mult-table" id="interactive-mult-table">
+                        <!-- 由 JavaScript 動態生成 9x9 表格 -->
+                    </table>
+                </div>
+            </div>
+
+            <!-- 視圖 B: 行動端單數口訣大卡片視圖 (手指點選極致體驗) -->
+            <div id="chart-view-cards" style="display: none;">
+                <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 10px;">
+                    選擇想複習的乘數，大字清晰好讀且支援真人發音：
+                </p>
+                <div class="chart-chips-row" id="chart-chips-container">
+                    <!-- 2 ~ 9 快速選擇晶片 -->
+                </div>
+                <div class="chart-cards-list" id="chart-cards-list">
+                    <!-- 9 道大字算式卡片 -->
+                </div>
+            </div>
+
             <div style="margin-top: 14px;">
                 <button type="button" class="btn btn-secondary btn-block" id="btn-chart-bottom-close">關閉乘法表</button>
             </div>

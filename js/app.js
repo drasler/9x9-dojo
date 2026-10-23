@@ -130,6 +130,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         modalChart: document.getElementById('modal-chart'),
         btnCloseChart: document.getElementById('btn-close-chart'),
+        tabChartMatrix: document.getElementById('tab-chart-matrix'),
+        tabChartCards: document.getElementById('tab-chart-cards'),
+        chartViewMatrix: document.getElementById('chart-view-matrix'),
+        chartViewCards: document.getElementById('chart-view-cards'),
+        chartChipsContainer: document.getElementById('chart-chips-container'),
+        chartCardsList: document.getElementById('chart-cards-list'),
         interactiveMultTable: document.getElementById('interactive-mult-table'),
 
         modalMistakes: document.getElementById('modal-mistakes'),
@@ -296,8 +302,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 生成 9x9 對照表
+    // 生成 9x9 對照表 (全矩陣 + 行動端單段大字卡)
     function renderMultTable() {
+        // 1. 生成 100% 適配的 9x9 矩陣
         let html = '<thead><tr><th>×</th>';
         for (let col = 1; col <= 9; col++) {
             html += `<th>${col}</th>`;
@@ -322,6 +329,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 sound.playCorrect(1);
             });
         });
+
+        // 2. 生成行動端單數口訣大卡片 (2~9)
+        let selectedFactor = 2;
+        function renderCards(factor) {
+            selectedFactor = factor;
+            // 更新 chips
+            if (DOM.chartChipsContainer) {
+                DOM.chartChipsContainer.innerHTML = '';
+                for (let f = 2; f <= 9; f++) {
+                    const chip = document.createElement('button');
+                    chip.type = 'button';
+                    chip.className = `chart-chip ${f === factor ? 'active' : ''}`;
+                    chip.textContent = f;
+                    chip.addEventListener('click', () => renderCards(f));
+                    DOM.chartChipsContainer.appendChild(chip);
+                }
+            }
+
+            // 更新 9 道卡片
+            if (DOM.chartCardsList) {
+                DOM.chartCardsList.innerHTML = '';
+                for (let m = 1; m <= 9; m++) {
+                    const row = document.createElement('div');
+                    row.className = 'chart-card-row';
+                    row.innerHTML = `
+                        <span style="font-size:1.15rem; font-weight:800;">${factor} × ${m} = <strong style="color:var(--primary-light); font-size:1.25rem;">${factor * m}</strong></span>
+                        <span style="font-size:0.85rem; color:var(--accent-cyan); display:flex; align-items:center; gap:4px;">
+                            🔊 唸口訣
+                        </span>
+                    `;
+                    row.addEventListener('click', () => {
+                        sound.speakQuestion(factor, m, false);
+                        sound.playCorrect(1);
+                    });
+                    DOM.chartCardsList.appendChild(row);
+                }
+            }
+        }
+        renderCards(2);
+
+        // 3. 綁定查閱切換按鈕
+        if (DOM.tabChartMatrix && DOM.tabChartCards) {
+            DOM.tabChartMatrix.addEventListener('click', () => {
+                DOM.tabChartMatrix.classList.add('active');
+                DOM.tabChartCards.classList.remove('active');
+                DOM.chartViewMatrix.style.display = 'block';
+                DOM.chartViewCards.style.display = 'none';
+            });
+            DOM.tabChartCards.addEventListener('click', () => {
+                DOM.tabChartCards.classList.add('active');
+                DOM.tabChartMatrix.classList.remove('active');
+                DOM.chartViewMatrix.style.display = 'none';
+                DOM.chartViewCards.style.display = 'block';
+            });
+        }
     }
 
     // ==========================================
