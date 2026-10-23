@@ -390,6 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. 視圖切換
     // ==========================================
     function switchTab(tabKey) {
+        document.body.classList.remove('in-arena');
         state.activeTab = tabKey;
         DOM.modeTabs.forEach(tab => {
             const isActive = tab.dataset.mode === tabKey;
@@ -409,10 +410,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showArena() {
+        document.body.classList.add('in-arena');
         DOM.viewAdventure.style.display = 'none';
         DOM.viewExam.style.display = 'none';
         DOM.viewPractice.style.display = 'none';
         DOM.viewArena.style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
     // ==========================================
@@ -567,7 +570,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 判斷聽寫 vs 讀寫
         if (q.isDictation) {
-            DOM.arenaSensoryBadge.textContent = '🎧 聽力聽寫 (盲測)';
+            DOM.arenaSensoryBadge.textContent = '🎧 盲測';
             DOM.arenaSensoryBadge.className = 'sensory-tag dictation';
             DOM.arenaQuestionText.innerHTML = `
                 <div class="dictation-container">
@@ -584,7 +587,7 @@ document.addEventListener('DOMContentLoaded', () => {
             DOM.arenaDictationControls.style.display = 'block';
             sound.speakQuestion(q.factorA, q.factorB, q.isReverse, q.isFillA, true);
         } else {
-            DOM.arenaSensoryBadge.textContent = '📖 視覺讀寫';
+            DOM.arenaSensoryBadge.textContent = '📖 讀寫';
             DOM.arenaSensoryBadge.className = 'sensory-tag reading';
             DOM.arenaQuestionText.textContent = q.questionText;
             DOM.arenaDictationControls.style.display = 'none';
@@ -596,7 +599,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.totalQuestionsInRound === 999) {
             DOM.arenaProgressText.textContent = `第 ${state.currentQuestionIndex} 題`;
         } else {
-            DOM.arenaProgressText.textContent = `第 ${state.currentQuestionIndex} / ${state.totalQuestionsInRound} 題`;
+            DOM.arenaProgressText.textContent = `${state.currentQuestionIndex} / ${state.totalQuestionsInRound}`;
         }
 
         if (state.combo >= 2) {
@@ -808,6 +811,7 @@ document.addEventListener('DOMContentLoaded', () => {
             openModal(DOM.modalExamResult);
         } else {
             alert(`🎉 特訓結束！\n總共練習: ${totalAttempted} 題\n答對題數: ${state.correctCount} 題\n正確率: ${Math.round(accuracy * 100)}%`);
+            document.body.classList.remove('in-arena');
             switchTab(state.activeTab);
         }
 
@@ -819,6 +823,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function endRound(confirmPrompt = true) {
         state.inGame = false;
         clearInterval(state.timerId);
+        document.body.classList.remove('in-arena');
         switchTab(state.activeTab);
     }
 

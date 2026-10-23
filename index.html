@@ -22,7 +22,7 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=2.1.0', { updateViaCache: 'none' })
+          navigator.serviceWorker.register('./sw.js?v=2.2.0', { updateViaCache: 'none' })
             .then((reg) => {
               // 主動檢查遠端是否有更新
               reg.update();
@@ -42,7 +42,7 @@
     </script>
 
     <!-- Stylesheets (含版本防快取) -->
-    <link rel="stylesheet" href="css/style.css?v=2.1.0">
+    <link rel="stylesheet" href="css/style.css?v=2.2.0">
 </head>
 <body>
 
@@ -239,21 +239,23 @@
         <!-- 作答戰場視圖 (Quiz Battle Arena) -->
         <section id="view-arena" class="glass-panel" style="display:none;">
             <div class="battle-arena">
-                <!-- 狀態資訊列 -->
+                <!-- 狀態資訊列 (防折行與緊湊響應式佈局) -->
                 <div class="arena-status-bar">
-                    <div class="status-pill">
-                        <span id="arena-mode-badge" style="background: rgba(99, 102, 241, 0.2); color: var(--primary-light); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;">闖關模式</span>
-                        <span id="arena-sensory-badge" class="sensory-tag reading" style="margin-left: 4px;">📖 讀寫</span>
-                        <span id="arena-progress-text" style="color: var(--text-muted); font-size: 0.85rem; margin-left: 6px;">第 1 / 10 題</span>
+                    <div class="arena-status-left">
+                        <span id="arena-mode-badge" class="arena-badge-tier">一階</span>
+                        <span id="arena-sensory-badge" class="sensory-tag reading">📖 讀寫</span>
+                        <span id="arena-progress-text" class="arena-progress-badge">4 / 20</span>
                     </div>
 
                     <div class="combo-meter" id="arena-combo-display" style="visibility: hidden;">
                         🔥 3 COMBO
                     </div>
 
-                    <div class="status-pill">
-                        <span style="font-size: 0.85rem; color: var(--text-muted);">⏱️ 剩餘:</span>
-                        <span id="arena-time-text" style="font-size: 1.1rem; font-weight: 800; color: var(--accent-amber);">30s</span>
+                    <div class="arena-status-right">
+                        <span class="arena-timer-badge">
+                            <span class="timer-icon">⏱️</span>
+                            <span id="arena-time-text">30s</span>
+                        </span>
                     </div>
                 </div>
 
@@ -268,7 +270,7 @@
                 </div>
 
                 <!-- 聽寫模式專屬按鈕 -->
-                <div id="arena-dictation-controls" style="display: none; margin-bottom: 14px;">
+                <div id="arena-dictation-controls" style="display: none; margin-bottom: 10px;">
                     <button type="button" class="btn-replay-speech" id="btn-replay-speech" title="再聽一次口訣">
                         🔊 重聽口訣一遍
                     </button>
@@ -296,11 +298,11 @@
                 </div>
 
                 <!-- 作答控制列 -->
-                <div style="display: flex; gap: 12px; margin-top: 14px; width: 100%; max-width: 360px;">
+                <div class="arena-actions-row">
                     <button type="button" class="btn btn-secondary" id="btn-quit-arena" style="flex: 1;">
                         ⏸️ 退出本次練習
                     </button>
-                    <button type="button" class="btn btn-success" id="btn-submit-answer" style="flex: 1.5; font-weight: 800;">
+                    <button type="button" class="btn btn-success" id="btn-submit-answer" style="flex: 1.4; font-weight: 800;">
                         送出答案 ↵
                     </button>
                 </div>
@@ -312,7 +314,7 @@
             <p>9x9 乘法大師 &copy; 2026 ・ 專為大腦肌肉記憶打造的極速乘法訓練系統</p>
             <p style="margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;">
                 <span>支援離線使用 PWA ・ 跨平台響應式佈局</span>
-                <span class="badge" style="background: rgba(99,102,241,0.25); color: #818cf8; border: 1px solid rgba(99,102,241,0.4); padding: 2px 8px; border-radius: 6px; font-size: 0.76rem; font-weight: 700;">v2.1.0 最新版</span>
+                <span class="badge" style="background: rgba(99,102,241,0.25); color: #818cf8; border: 1px solid rgba(99,102,241,0.4); padding: 2px 8px; border-radius: 6px; font-size: 0.76rem; font-weight: 700;">v2.2.0 最新版</span>
                 <button type="button" id="btn-force-refresh" style="background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 2px 8px; border-radius: 6px; font-size: 0.72rem; cursor: pointer; transition: all 0.2s;" title="清除瀏覽器離線快取並重新載入最新版本">🔄 清除快取重整</button>
             </p>
         </footer>
@@ -462,8 +464,8 @@
     </div>
 
     <!-- 核心腳本載入 (含版本防快取) -->
-    <script src="js/audio.js?v=2.1.0"></script>
-    <script src="js/engine.js?v=2.1.0"></script>
-    <script src="js/app.js?v=2.1.0"></script>
+    <script src="js/audio.js?v=2.2.0"></script>
+    <script src="js/engine.js?v=2.2.0"></script>
+    <script src="js/app.js?v=2.2.0"></script>
 </body>
 </html>

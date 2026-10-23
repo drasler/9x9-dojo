@@ -415,14 +415,87 @@ body::after {
     width: 100%;
 }
 
+/* 沉浸式作答戰場 (Immersive Quiz Arena) - 進入戰場時隱藏統計與標籤，防鍵盤被裁切 */
+body.in-arena {
+    overflow-x: hidden;
+}
+body.in-arena .mode-tabs,
+body.in-arena .stats-banner,
+body.in-arena #overdue-banner-container,
+body.in-arena .app-footer {
+    display: none !important;
+}
+body.in-arena .app-container {
+    padding-top: 8px;
+    padding-bottom: 8px;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+}
+body.in-arena .top-nav {
+    margin-bottom: 8px;
+    padding: 6px 14px;
+}
+body.in-arena #view-arena {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 16px 18px;
+}
+
 .arena-status-bar {
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-bottom: 16px;
+    gap: 8px;
+    padding-bottom: 12px;
     border-bottom: 1px solid var(--border-card);
-    margin-bottom: 24px;
+    margin-bottom: 16px;
+}
+.arena-status-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.arena-badge-tier {
+    background: rgba(99, 102, 241, 0.2);
+    color: var(--primary-light);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    padding: 3px 10px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+.arena-progress-badge {
+    color: var(--text-muted);
+    font-size: 0.86rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.arena-status-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.arena-timer-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    padding: 3px 10px;
+    border-radius: 12px;
+    color: var(--accent-amber);
+    font-size: 0.95rem;
+    font-weight: 800;
+    white-space: nowrap;
 }
 .status-pill {
     display: flex;
@@ -430,17 +503,27 @@ body::after {
     gap: 6px;
     font-size: 0.95rem;
     font-weight: 700;
+    white-space: nowrap;
 }
 .combo-meter {
     font-size: 1.05rem;
     font-weight: 900;
     color: var(--accent-amber);
+    white-space: nowrap;
     animation: comboPulse 0.3s ease;
 }
 @keyframes comboPulse {
     0% { transform: scale(0.8); }
     50% { transform: scale(1.2); }
     100% { transform: scale(1); }
+}
+
+.arena-actions-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 14px;
+    width: 100%;
+    max-width: 360px;
 }
 
 /* Timer Bar */
@@ -905,18 +988,88 @@ body::after {
         padding: 16px 12px;
         border-radius: var(--radius-lg);
     }
+
+    /* 行動裝置戰場緊湊排版 - 徹底解決數字鍵盤與按鈕被裁切問題 */
+    body.in-arena .app-container {
+        padding: 4px 8px 8px;
+    }
+    body.in-arena .top-nav {
+        padding: 4px 8px;
+        margin-bottom: 4px;
+    }
+    body.in-arena #view-arena {
+        padding: 10px 10px;
+    }
+    .arena-status-bar {
+        padding-bottom: 6px;
+        margin-bottom: 8px;
+    }
+    .arena-badge-tier {
+        font-size: 0.74rem;
+        padding: 2px 6px;
+    }
+    .arena-progress-badge {
+        font-size: 0.76rem;
+    }
+    .arena-timer-badge {
+        font-size: 0.85rem;
+        padding: 2px 8px;
+    }
+    .time-progress-wrap {
+        height: 4px;
+        margin-bottom: 8px;
+    }
     .question-billboard {
-        font-size: 2.6rem;
-        min-height: 90px;
+        font-size: 2.5rem;
+        min-height: 50px;
+        margin-bottom: 6px;
+    }
+    .dictation-container {
+        gap: 4px;
+    }
+    .dictation-wave {
+        height: 26px;
+        gap: 4px;
+    }
+    .dictation-title {
+        font-size: 1.25rem;
+    }
+    .btn-replay-speech {
+        padding: 4px 10px;
+        font-size: 0.75rem;
     }
     .answer-display-box {
-        width: 170px;
-        height: 52px;
-        font-size: 1.9rem;
+        width: 150px;
+        height: 42px;
+        font-size: 1.75rem;
+        margin-bottom: 8px;
+        border-width: 2px;
+    }
+    .numpad {
+        gap: 6px;
+        max-width: 320px;
+        width: 100%;
+        margin-bottom: 6px;
     }
     .num-key {
-        padding: 12px 0;
-        font-size: 1.35rem;
+        padding: 8px 0;
+        min-height: 40px;
+        font-size: 1.3rem;
+        border-radius: 8px;
+    }
+    .num-key.func-key {
+        font-size: 1.05rem;
+    }
+    .arena-actions-row {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+        width: 100%;
+        max-width: 320px;
+    }
+    .arena-actions-row .btn {
+        padding: 8px 12px;
+        font-size: 0.86rem;
     }
     .modal-box {
         padding: 16px 10px;
