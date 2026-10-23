@@ -1,9 +1,13 @@
 /**
  * 9x9 乘法大師 - 主應用控制器 (Main Application Controller)
+ * 國小四年級以上特化版本：
+ * 1. 全階 2~9 出題。
+ * 2. 9階百題 100% 正確率考核。
+ * 3. 讀寫與聽寫分開分階支援。
+ * 4. 錯題 3 天限時與降階機制整合。
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 取得引擎與音效全域實例
     const engine = window.multiplicationEngine;
     const sound = window.soundEngine;
 
@@ -25,9 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 計時器
         timerId: null,
-        totalTimeRemaining: 0,       // 整局倒數 (例如檢定考 60s)
+        totalTimeRemaining: 0,
         totalTimeAllocated: 0,
-        questionTimeRemaining: 0,    // 單題倒數 (例如疾風關卡 4s)
+        questionTimeRemaining: 0,
         questionTimeAllocated: 0,
         roundStartTime: 0,
 
@@ -35,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
         practiceFactors: [2, 3, 4, 5, 6, 7, 8, 9],
         practiceOrder: 'random',
         practiceType: 'normal',
+        practiceSensory: 'reading',
         practiceSeqIndex: 0,
 
         // 錯題特訓隊列
@@ -52,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnOpenMistakes: document.getElementById('btn-open-mistakes'),
         mistakeCountBadge: document.getElementById('mistake-count-badge'),
         btnToggleTheme: document.getElementById('btn-toggle-theme'),
+        overdueBannerContainer: document.getElementById('overdue-banner-container'),
 
         // 模式切換 Tabs
         mainModeTabs: document.getElementById('main-mode-tabs'),
@@ -84,15 +90,19 @@ document.addEventListener('DOMContentLoaded', () => {
         practiceFactorsSelector: document.getElementById('practice-factors-selector'),
         practiceOrderSelect: document.getElementById('practice-order-select'),
         practiceTypeSelect: document.getElementById('practice-type-select'),
+        practiceSensorySelect: document.getElementById('practice-sensory-select'),
         btnStartPractice: document.getElementById('btn-start-practice'),
 
         // 作答戰場 Arena
         arenaModeBadge: document.getElementById('arena-mode-badge'),
+        arenaSensoryBadge: document.getElementById('arena-sensory-badge'),
         arenaProgressText: document.getElementById('arena-progress-text'),
         arenaComboDisplay: document.getElementById('arena-combo-display'),
         arenaTimeText: document.getElementById('arena-time-text'),
         arenaTimeBar: document.getElementById('arena-time-bar'),
         arenaQuestionText: document.getElementById('arena-question-text'),
+        arenaDictationControls: document.getElementById('arena-dictation-controls'),
+        btnReplaySpeech: document.getElementById('btn-replay-speech'),
         arenaAnswerBox: document.getElementById('arena-answer-box'),
         arenaAnswerVal: document.getElementById('arena-answer-val'),
         arenaNumpad: document.getElementById('arena-numpad'),
@@ -124,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         modalMistakes: document.getElementById('modal-mistakes'),
         btnCloseMistakes: document.getElementById('btn-close-mistakes'),
+        mistakesDeadlineSummary: document.getElementById('mistakes-deadline-summary'),
         mistakesListContainer: document.getElementById('mistakes-list-container'),
         btnClearMistakes: document.getElementById('btn-clear-mistakes'),
         btnDrillMistakes: document.getElementById('btn-drill-mistakes')
@@ -133,6 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. 初始化與介面刷新
     // ==========================================
     function initApp() {
+        checkOverdueAndDemotion();
         renderStages();
         renderStats();
         renderMultTable();
@@ -144,6 +156,44 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.setAttribute('data-theme', savedTheme);
     }
 
+    // 檢測 3 天未復習與降階懲罰
+    function checkOverdueAndDemotion() {
+        const result = engine.checkMistakesOverdue();
+        DOM.overdueBannerContainer.innerHTML = '';
+
+        if (result.demoted) {
+            DOM.overdueBannerContainer.innerHTML = `
+                <div class="overdue-alert-banner">
+                    <div>
+                        <strong>⚠️ 降階懲罰警告：</strong>您有 ${result.overdueCount} 道錯題超過 3 天 (72小時) 未復習！<br>
+                        系統已依規定扣除 1 個階級（目前退回至 Lv.${result.currentTier}）。請立即進行錯題特訓清空！
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-banner-drill" style="white-space:nowrap; margin-left:12px;">立即特訓</button>
+                </div>
+            `;
+            const btnDrill = document.getElementById('btn-banner-drill');
+            if (btnDrill) {
+                btnDrill.addEventListener('click', startMistakesDrill);
+            }
+        } else {
+            const urgentStatus = engine.getMostUrgentMistakeStatus();
+            if (urgentStatus && urgentStatus.isUrgent) {
+                DOM.overdueBannerContainer.innerHTML = `
+                    <div class="overdue-alert-banner" style="background: rgba(245, 158, 11, 0.15); border-color: var(--accent-amber);">
+                        <div>
+                            ⏳ <strong>錯題復習時效提醒：</strong>您有即將到期的錯題（${urgentStatus.text}）！超過 3 天未清空將被扣除 1 個階級！
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-banner-drill" style="white-space:nowrap; margin-left:12px;">立即消滅</button>
+                    </div>
+                `;
+                const btnDrill = document.getElementById('btn-banner-drill');
+                if (btnDrill) {
+                    btnDrill.addEventListener('click', startMistakesDrill);
+                }
+            }
+        }
+    }
+
     // 刷新頂部個人數據展示
     function renderStats() {
         const p = engine.profile;
@@ -151,7 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.headerUserTier.textContent = highestTier.tier;
         DOM.statCurrentTier.textContent = `Lv.${p.unlockedTier}`;
 
-        // 計算獲得星數
         let totalStars = 0;
         Object.values(p.tierStars).forEach(s => totalStars += s);
         DOM.statTotalStars.textContent = `${totalStars} ★`;
@@ -166,8 +215,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (count > 0) {
             DOM.mistakeCountBadge.style.display = 'flex';
             DOM.mistakeCountBadge.textContent = count > 99 ? '99+' : count;
+
+            const urgent = engine.getMostUrgentMistakeStatus();
+            if (urgent && (urgent.isOverdue || urgent.isUrgent)) {
+                DOM.btnOpenMistakes.style.borderColor = 'var(--accent-rose)';
+                DOM.btnOpenMistakes.style.animation = 'shake 2.5s infinite';
+            } else {
+                DOM.btnOpenMistakes.style.borderColor = 'var(--border-card)';
+                DOM.btnOpenMistakes.style.animation = 'none';
+            }
         } else {
             DOM.mistakeCountBadge.style.display = 'none';
+            DOM.btnOpenMistakes.style.borderColor = 'var(--border-card)';
+            DOM.btnOpenMistakes.style.animation = 'none';
         }
     }
 
@@ -185,24 +245,43 @@ document.addEventListener('DOMContentLoaded', () => {
             card.className = `stage-card ${isUnlocked ? '' : 'locked'} ${isCurrent ? 'current' : ''}`;
             card.dataset.tierId = cfg.id;
 
-            // 星星 HTML
             let starsHtml = '';
             for (let i = 1; i <= 3; i++) {
                 starsHtml += `<span class="${i <= stars ? 'filled' : ''}">★</span>`;
+            }
+
+            // 感官標籤文字
+            let sensoryLabel = '📖 讀寫';
+            let sensoryClass = 'reading';
+            if (cfg.sensoryMode === 'dictation') {
+                sensoryLabel = '🎧 聽寫盲測';
+                sensoryClass = 'dictation';
+            } else if (cfg.sensoryMode === 'mix') {
+                sensoryLabel = '🔀 雙模混合';
+                sensoryClass = 'mix';
+            }
+
+            // 嚴苛標準文字
+            let targetText = `${cfg.count} 題 / 正確率 ≥ ${Math.round(cfg.passRate * 100)}%`;
+            if (cfg.id === 9) {
+                targetText = `🔥 100 題 / 正確率 100% (零容錯)`;
             }
 
             card.innerHTML = `
                 <div>
                     <div class="stage-header">
                         <span class="stage-badge">${cfg.badge}</span>
-                        <div class="stage-stars">${starsHtml}</div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span class="sensory-tag ${sensoryClass}">${sensoryLabel}</span>
+                            <div class="stage-stars">${starsHtml}</div>
+                        </div>
                     </div>
                     <div class="stage-tier">${cfg.tier}</div>
                     <h3 class="stage-title">${cfg.title}</h3>
                     <p class="stage-desc">${cfg.desc}</p>
                 </div>
                 <div class="stage-footer">
-                    <span>${cfg.count} 題 / 限時 ${cfg.timePerQuestion}s</span>
+                    <span>${targetText} (限時 ${cfg.timePerQuestion}s/題)</span>
                     <span>${isUnlocked ? (stars > 0 ? '✓ 已通關' : '⚡ 挑戰中') : '🔒 未解鎖'}</span>
                 </div>
             `;
@@ -235,7 +314,6 @@ document.addEventListener('DOMContentLoaded', () => {
         html += '</tbody>';
         DOM.interactiveMultTable.innerHTML = html;
 
-        // 綁定點擊朗讀
         DOM.interactiveMultTable.querySelectorAll('td').forEach(cell => {
             cell.addEventListener('click', () => {
                 const r = parseInt(cell.dataset.r, 10);
@@ -247,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // 2. 視圖與頁籤切換
+    // 2. 視圖切換
     // ==========================================
     function switchTab(tabKey) {
         state.activeTab = tabKey;
@@ -265,6 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.inGame) {
             endRound(false);
         }
+        checkOverdueAndDemotion();
     }
 
     function showArena() {
@@ -277,8 +356,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 3. 遊戲模式啟動
     // ==========================================
-
-    // 啟動關卡闖關
     function startTierAdventure(tierId) {
         const cfg = engine.getTierConfig(tierId);
         state.gameMode = 'tier';
@@ -297,7 +374,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loadNextQuestion();
     }
 
-    // 啟動檢定考試
     function startExam() {
         const typeBtn = document.querySelector('.exam-type-btn.active');
         const examType = typeBtn ? typeBtn.dataset.type : 'time';
@@ -316,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
             state.gameMode = 'exam_time';
             state.totalTimeRemaining = totalSec;
             state.totalTimeAllocated = totalSec;
-            state.totalQuestionsInRound = 999; // 限時模式直到時間結束
+            state.totalQuestionsInRound = 999;
             DOM.arenaModeBadge.textContent = `隨機檢定 (${totalSec}s)`;
             startGlobalCountdown();
         } else {
@@ -332,7 +408,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loadNextQuestion();
     }
 
-    // 啟動自由練習
     function startPractice() {
         state.gameMode = 'practice';
         state.currentQuestionIndex = 0;
@@ -343,14 +418,13 @@ document.addEventListener('DOMContentLoaded', () => {
         state.practiceSeqIndex = 0;
         state.roundStartTime = Date.now();
         state.inGame = true;
-        state.totalQuestionsInRound = 999; // 自由練習無上限
+        state.totalQuestionsInRound = 999;
         DOM.arenaModeBadge.textContent = '自由練習';
 
         showArena();
         loadNextQuestion();
     }
 
-    // 啟動錯題攻堅特訓
     function startMistakesDrill() {
         const list = engine.getMistakesList();
         if (list.length === 0) {
@@ -370,7 +444,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.roundStartTime = Date.now();
         state.inGame = true;
 
-        DOM.arenaModeBadge.textContent = '🔥 錯題特訓';
+        DOM.arenaModeBadge.textContent = '🔥 錯題限時特訓';
         showArena();
         loadNextQuestion();
     }
@@ -381,10 +455,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadNextQuestion() {
         if (!state.inGame) return;
 
-        // 清空輸入
         clearInput();
 
-        // 檢查是否已達目標題數 (針對闖關或定量考試)
         if (state.gameMode === 'tier' || state.gameMode === 'exam_count' || state.gameMode === 'mistakes') {
             if (state.currentQuestionIndex >= state.totalQuestionsInRound) {
                 finishRound();
@@ -395,24 +467,28 @@ document.addEventListener('DOMContentLoaded', () => {
         state.currentQuestionIndex++;
         updateProgressBar();
 
-        // 依模式取得題目
         let q;
         if (state.gameMode === 'tier') {
             const cfg = engine.getTierConfig(state.activeTierId);
             q = engine.generateQuestion({
                 factors: cfg.factors,
-                reverseRate: cfg.reverseRate
+                sensoryMode: cfg.sensoryMode,
+                reverseRate: cfg.reverseRate,
+                hardWeight: cfg.hardWeight
             });
             startPerQuestionTimer(cfg.timePerQuestion);
         } else if (state.gameMode === 'exam_time' || state.gameMode === 'exam_count') {
             q = engine.generateQuestion({
                 factors: [2, 3, 4, 5, 6, 7, 8, 9],
-                reverseRate: 0.15
+                sensoryMode: 'mix', // 檢定考採讀寫+聽寫混測
+                reverseRate: 0.25,
+                hardWeight: 0.35
             });
         } else if (state.gameMode === 'mistakes') {
             const item = state.mistakesQueue[(state.currentQuestionIndex - 1) % state.mistakesQueue.length];
             q = engine.generateQuestion({
                 factors: [item.factorA],
+                sensoryMode: 'reading',
                 mode: 'sequence',
                 seqIndex: item.factorB - 1
             });
@@ -420,20 +496,40 @@ document.addEventListener('DOMContentLoaded', () => {
             // practice 自由練習
             q = engine.generateQuestion({
                 factors: state.practiceFactors,
+                sensoryMode: state.practiceSensory,
                 mode: state.practiceOrder,
                 reverseRate: state.practiceType === 'reverse' ? 1 : (state.practiceType === 'mix' ? 0.5 : 0),
                 seqIndex: state.practiceSeqIndex++
             });
         }
 
-        // 渲染題目
-        DOM.arenaQuestionText.textContent = q.questionText;
-
-        // 播放語音朗讀
-        sound.speakQuestion(q.factorA, q.factorB, q.isReverse, q.isFillA);
+        // 判斷聽寫 vs 讀寫
+        if (q.isDictation) {
+            DOM.arenaSensoryBadge.textContent = '🎧 聽力聽寫 (盲測)';
+            DOM.arenaSensoryBadge.className = 'sensory-tag dictation';
+            DOM.arenaQuestionText.innerHTML = `
+                <div class="dictation-container">
+                    <div class="dictation-wave">
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                        <div class="wave-bar"></div>
+                    </div>
+                    <div class="dictation-title">🎧 請聽口訣心算作答</div>
+                </div>
+            `;
+            DOM.arenaDictationControls.style.display = 'block';
+            sound.speakQuestion(q.factorA, q.factorB, q.isReverse, q.isFillA, true);
+        } else {
+            DOM.arenaSensoryBadge.textContent = '📖 視覺讀寫';
+            DOM.arenaSensoryBadge.className = 'sensory-tag reading';
+            DOM.arenaQuestionText.textContent = q.questionText;
+            DOM.arenaDictationControls.style.display = 'none';
+            sound.speakQuestion(q.factorA, q.factorB, q.isReverse, q.isFillA, false);
+        }
     }
 
-    // 更新進度與資訊列
     function updateProgressBar() {
         if (state.totalQuestionsInRound === 999) {
             DOM.arenaProgressText.textContent = `第 ${state.currentQuestionIndex} 題`;
@@ -441,7 +537,6 @@ document.addEventListener('DOMContentLoaded', () => {
             DOM.arenaProgressText.textContent = `第 ${state.currentQuestionIndex} / ${state.totalQuestionsInRound} 題`;
         }
 
-        // Combo 儀表板
         if (state.combo >= 2) {
             DOM.arenaComboDisplay.style.visibility = 'visible';
             DOM.arenaComboDisplay.textContent = `🔥 ${state.combo} COMBO!`;
@@ -450,7 +545,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // 單題計時器 (用於闖關疾風關卡)
     function startPerQuestionTimer(durationSec) {
         clearInterval(state.timerId);
         state.questionTimeAllocated = durationSec;
@@ -467,13 +561,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (state.questionTimeRemaining <= 0) {
                 clearInterval(state.timerId);
-                // 超時視同答錯
                 handleAnswerSubmit(true);
             }
         }, stepMs);
     }
 
-    // 全域總計時器 (用於檢定考 60s/120s/180s)
     function startGlobalCountdown() {
         clearInterval(state.timerId);
         DOM.arenaTimeText.textContent = `${state.totalTimeRemaining}s`;
@@ -516,12 +608,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // 數字輸入 (最多支援 3 位數，乘法 9x9 最大為 81)
         if (state.inputBuffer.length < 3) {
             state.inputBuffer += key;
             DOM.arenaAnswerVal.textContent = state.inputBuffer;
 
-            // 智能自動快速核對：若長度已達到目標答案長度且數值正確，直接秒送出
             if (engine.currentQuestion) {
                 const targetStr = String(engine.currentQuestion.targetAnswer);
                 if (state.inputBuffer === targetStr) {
@@ -539,7 +629,6 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.arenaAnswerBox.className = 'answer-display-box';
     }
 
-    // 提交答案處理
     function handleAnswerSubmit(isTimeout = false) {
         if (!state.inGame || !engine.currentQuestion) return;
 
@@ -548,7 +637,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = engine.checkAnswer(isTimeout ? -999 : state.inputBuffer);
 
         if (result.isCorrect) {
-            // 答對
             state.correctCount++;
             state.combo++;
             if (state.combo > state.maxComboInRound) {
@@ -566,14 +654,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadNextQuestion();
             }, 180);
         } else {
-            // 答錯
             state.wrongCount++;
             state.combo = 0;
             sound.playWrong();
             DOM.arenaAnswerBox.className = 'answer-display-box wrong';
 
-            // 顯示正確答案提示短暫閃爍
             DOM.arenaAnswerVal.textContent = isTimeout ? `時間到! Ans:${result.targetAnswer}` : `Ans: ${result.targetAnswer}`;
+
+            // 若在聽寫模式下答錯，立刻揭曉算式原文給予大腦反饋
+            if (engine.currentQuestion.isDictation) {
+                DOM.arenaQuestionText.innerHTML = `<span style="font-size:2.8rem; color:var(--accent-rose);">${engine.currentQuestion.questionText} = ${engine.currentQuestion.targetAnswer}</span>`;
+            }
 
             setTimeout(() => {
                 loadNextQuestion();
@@ -598,42 +689,46 @@ document.addEventListener('DOMContentLoaded', () => {
         sound.playFanfare();
 
         if (state.gameMode === 'tier') {
-            // 闖關模式結算
             const cfg = engine.getTierConfig(state.activeTierId);
             let stars = 0;
-            if (accuracy >= cfg.passRate) {
-                stars = 1;
-                if (accuracy >= 0.92) stars = 2;
-                if (accuracy === 1.0) stars = 3;
+
+            if (state.activeTierId === 9) {
+                // 第 9 階：百題零容錯！必須 100% 正確率
+                if (accuracy === 1.0) {
+                    stars = 3;
+                }
+            } else {
+                if (accuracy >= cfg.passRate) {
+                    stars = 1;
+                    if (accuracy >= 0.95) stars = 2;
+                    if (accuracy === 1.0) stars = 3;
+                }
             }
 
             engine.recordTierResult(state.activeTierId, stars, accuracy, avgSpeed);
 
-            // 渲染彈窗
             DOM.modalClearIcon.textContent = stars > 0 ? '🏆' : '💪';
-            DOM.modalClearTitle.textContent = stars > 0 ? `${cfg.tier} 挑戰成功！` : `${cfg.tier} 再接再厲！`;
+            DOM.modalClearTitle.textContent = stars > 0 ? `${cfg.tier} 挑戰成功！` : `${cfg.tier} 未達通關標準`;
 
             let starsHtml = '';
             for (let i = 1; i <= 3; i++) {
                 starsHtml += `<span class="${i <= stars ? 'filled' : ''}">★</span>`;
             }
             DOM.modalClearStars.innerHTML = starsHtml;
-            DOM.modalClearAccuracy.textContent = `${Math.round(accuracy * 100)}%`;
+            DOM.modalClearAccuracy.textContent = `${Math.round(accuracy * 100)}% (標準: ${Math.round(cfg.passRate * 100)}%)`;
             DOM.modalClearSpeed.textContent = `${avgSpeed}s/題`;
 
-            // 按鈕控制
             DOM.btnModalNext.style.display = (stars > 0 && state.activeTierId < TIERS_CONFIG.length) ? 'inline-flex' : 'none';
 
             openModal(DOM.modalStageClear);
         } else if (state.gameMode === 'exam_time' || state.gameMode === 'exam_count') {
-            // 檢定考結算 -> 頒發證書
-            let rank = '初級達人';
-            if (state.correctCount >= 50 || accuracy >= 0.95) rank = '九段宗師';
-            else if (state.correctCount >= 30 || accuracy >= 0.9) rank = '高階專家';
-            else if (state.correctCount >= 15 || accuracy >= 0.8) rank = '進階好手';
+            let rank = '初階達人';
+            if (state.correctCount >= 50 && accuracy >= 0.95) rank = '九段宗師';
+            else if (state.correctCount >= 35 && accuracy >= 0.90) rank = '高階專家';
+            else if (state.correctCount >= 20 && accuracy >= 0.85) rank = '進階好手';
 
             const cert = engine.generateCertificate({
-                title: '九九乘法能力合格證書',
+                title: '九九乘法能力檢定證書',
                 rank,
                 score: state.correctCount,
                 accuracy: `${Math.round(accuracy * 100)}%`,
@@ -650,13 +745,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             openModal(DOM.modalExamResult);
         } else {
-            // 自由練習或錯題特訓
             alert(`🎉 特訓結束！\n總共練習: ${totalAttempted} 題\n答對題數: ${state.correctCount} 題\n正確率: ${Math.round(accuracy * 100)}%`);
             switchTab(state.activeTab);
         }
 
         renderStages();
         renderStats();
+        checkOverdueAndDemotion();
     }
 
     function endRound(confirmPrompt = true) {
@@ -666,11 +761,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ==========================================
-    // 7. 錯題簿渲染
+    // 7. 錯題簿渲染 (含 3 天期限倒數)
     // ==========================================
     function renderMistakesList() {
         const list = engine.getMistakesList();
         DOM.mistakesListContainer.innerHTML = '';
+
+        const urgent = engine.getMostUrgentMistakeStatus();
+        if (urgent) {
+            DOM.mistakesDeadlineSummary.innerHTML = `
+                <div style="color: ${urgent.isOverdue || urgent.isUrgent ? 'var(--accent-rose)' : 'var(--accent-amber)'};">
+                    ⏳ <strong>最急迫復習時效：</strong>${urgent.text}
+                </div>
+            `;
+        } else {
+            DOM.mistakesDeadlineSummary.innerHTML = '';
+        }
 
         if (list.length === 0) {
             DOM.mistakesListContainer.innerHTML = `
@@ -683,15 +789,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         DOM.btnDrillMistakes.disabled = false;
+        const now = Date.now();
+
         list.forEach(item => {
             const row = document.createElement('div');
             row.className = 'mistake-item';
+
+            const deadline = item.deadline || (now + 3 * 24 * 3600 * 1000);
+            const diff = deadline - now;
+            const diffHours = Math.floor(diff / (1000 * 3600));
+            let remainText = '';
+            let isUrgent = false;
+
+            if (diff <= 0) {
+                remainText = '⚠️ 已逾期！';
+                isUrgent = true;
+            } else if (diffHours >= 24) {
+                remainText = `剩餘 ${Math.floor(diffHours / 24)}天 ${diffHours % 24}小時`;
+            } else {
+                remainText = `剩餘 ${diffHours}小時 (緊急)`;
+                isUrgent = true;
+            }
+
             row.innerHTML = `
                 <div>
                     <div style="font-size: 1.1rem; font-weight: 800;">${item.qText}</div>
-                    <div style="font-size: 0.78rem; color: var(--text-muted);">最後誤答: ${item.lastWrongAnswer || '未作答'}</div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">
+                        失誤次數: ${item.count} 次 ｜ 最後誤答: ${item.lastWrongAnswer || '未作答'}
+                    </div>
                 </div>
-                <span class="mistake-badge">累計失誤 ${item.count} 次</span>
+                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                    <span class="mistake-badge">連對2次消滅</span>
+                    <span class="mistake-deadline-tag ${isUrgent ? 'urgent' : ''}">${remainText}</span>
+                </div>
             `;
             DOM.mistakesListContainer.appendChild(row);
         });
@@ -711,7 +841,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 9. 事件監聽綁定
     // ==========================================
     function setupEventListeners() {
-        // 返回主頁
         DOM.btnBrandHome.addEventListener('click', () => {
             if (state.inGame) {
                 endRound(true);
@@ -720,21 +849,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 頁籤點擊
         DOM.modeTabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 switchTab(tab.dataset.mode);
             });
         });
 
-        // 音效切換
         DOM.btnToggleSound.addEventListener('click', () => {
             sound.soundEnabled = !sound.soundEnabled;
             DOM.btnToggleSound.textContent = sound.soundEnabled ? '🔊' : '🔇';
             DOM.btnToggleSound.classList.toggle('active', sound.soundEnabled);
         });
 
-        // 語音朗讀口訣切換
         DOM.btnToggleVoice.addEventListener('click', () => {
             sound.voiceEnabled = !sound.voiceEnabled;
             DOM.btnToggleVoice.classList.toggle('active', sound.voiceEnabled);
@@ -743,7 +869,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 乘法對照表彈窗
+        // 聽寫模式重聽按鈕
+        DOM.btnReplaySpeech.addEventListener('click', () => {
+            sound.replaySpeech();
+        });
+
         DOM.btnOpenChart.addEventListener('click', () => openModal(DOM.modalChart));
         DOM.btnCloseChart.addEventListener('click', () => closeModal(DOM.modalChart));
         const bottomChartClose = document.getElementById('btn-chart-bottom-close');
@@ -751,7 +881,6 @@ document.addEventListener('DOMContentLoaded', () => {
             bottomChartClose.addEventListener('click', () => closeModal(DOM.modalChart));
         }
 
-        // 錯題本彈窗
         DOM.btnOpenMistakes.addEventListener('click', () => {
             renderMistakesList();
             openModal(DOM.modalMistakes);
@@ -762,11 +891,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 engine.clearMistakes();
                 renderMistakesList();
                 updateMistakesBadge();
+                checkOverdueAndDemotion();
             }
         });
         DOM.btnDrillMistakes.addEventListener('click', startMistakesDrill);
 
-        // 主題切換
         DOM.btnToggleTheme.addEventListener('click', () => {
             const current = document.documentElement.getAttribute('data-theme') || 'dark';
             const next = current === 'dark' ? 'light' : 'dark';
@@ -774,7 +903,6 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('math9x9_theme', next);
         });
 
-        // 虛擬九宮格按鍵點擊
         DOM.arenaNumpad.addEventListener('click', (e) => {
             const btn = e.target.closest('.num-key');
             if (btn) {
@@ -782,7 +910,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 實體鍵盤事件監聽
         window.addEventListener('keydown', (e) => {
             if (!state.inGame) return;
 
@@ -795,17 +922,18 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 handleAnswerSubmit(false);
+            } else if (e.key === 'r' || e.key === 'R') {
+                // 按 R 鍵快速重聽口訣
+                sound.replaySpeech();
             } else if (e.key === 'Escape') {
                 e.preventDefault();
                 endRound(true);
             }
         });
 
-        // 作答送出按鈕
         DOM.btnSubmitAnswer.addEventListener('click', () => handleAnswerSubmit(false));
         DOM.btnQuitArena.addEventListener('click', () => endRound(true));
 
-        // 檢定考設定按鈕
         DOM.examTypeBtns.forEach(btn => {
             btn.addEventListener('click', () => {
                 DOM.examTypeBtns.forEach(b => b.classList.remove('active'));
@@ -829,7 +957,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         DOM.btnStartExam.addEventListener('click', startExam);
 
-        // 自由練習段數選擇
         DOM.practiceFactorsSelector.addEventListener('click', (e) => {
             const btn = e.target.closest('.factor-btn');
             if (!btn) return;
@@ -857,9 +984,13 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.practiceTypeSelect.addEventListener('change', (e) => {
             state.practiceType = e.target.value;
         });
+        if (DOM.practiceSensorySelect) {
+            DOM.practiceSensorySelect.addEventListener('change', (e) => {
+                state.practiceSensory = e.target.value;
+            });
+        }
         DOM.btnStartPractice.addEventListener('click', startPractice);
 
-        // 闖關彈窗按鈕
         DOM.btnModalRetry.addEventListener('click', () => {
             closeModal(DOM.modalStageClear);
             startTierAdventure(state.activeTierId);
@@ -871,7 +1002,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 證書彈窗按鈕
         DOM.btnCertClose.addEventListener('click', () => {
             closeModal(DOM.modalExamResult);
             switchTab('exam');
@@ -881,7 +1011,6 @@ document.addEventListener('DOMContentLoaded', () => {
             startExam();
         });
 
-        // 點擊彈窗遮罩關閉
         [DOM.modalChart, DOM.modalMistakes].forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
@@ -891,6 +1020,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 啟動應用
     initApp();
 });

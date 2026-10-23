@@ -67,6 +67,9 @@
             </button>
         </nav>
 
+        <!-- 3 天錯題未清空降階警告橫幅容器 -->
+        <div id="overdue-banner-container"></div>
+
         <!-- 個人學習統計概覽 Banner -->
         <section class="stats-banner" aria-label="學習成就統計">
             <div class="stat-box">
@@ -171,20 +174,28 @@
                     <button type="button" class="factor-btn" data-factor="9">9</button>
                 </div>
 
-                <div style="display: flex; gap: 12px; margin: 20px 0;">
-                    <div style="flex: 1;">
+                <div style="display: flex; gap: 12px; margin: 20px 0; flex-wrap: wrap;">
+                    <div style="flex: 1; min-width: 160px;">
                         <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">出題順序：</label>
                         <select id="practice-order-select" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-card); background: var(--bg-card); color: var(--text-main); font-weight: 700;">
                             <option value="random">隨機打亂 (推薦)</option>
                             <option value="sequence">依序循環 (1~9)</option>
                         </select>
                     </div>
-                    <div style="flex: 1;">
+                    <div style="flex: 1; min-width: 160px;">
                         <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">題型方向：</label>
                         <select id="practice-type-select" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-card); background: var(--bg-card); color: var(--text-main); font-weight: 700;">
                             <option value="normal">標準題目 (A × B = ?)</option>
                             <option value="reverse">逆向填空 (? × B = C)</option>
                             <option value="mix">正反混合 (50% 隨機)</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1; min-width: 160px;">
+                        <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">感官模式：</label>
+                        <select id="practice-sensory-select" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-card); background: var(--bg-card); color: var(--text-main); font-weight: 700;">
+                            <option value="reading">📖 視覺讀寫 (顯示算式)</option>
+                            <option value="dictation">🎧 盲測聽寫 (隱藏算式)</option>
+                            <option value="mix">🔀 雙模混合 (隨機跳題)</option>
                         </select>
                     </div>
                 </div>
@@ -202,7 +213,8 @@
                 <div class="arena-status-bar">
                     <div class="status-pill">
                         <span id="arena-mode-badge" style="background: rgba(99, 102, 241, 0.2); color: var(--primary-light); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;">闖關模式</span>
-                        <span id="arena-progress-text" style="color: var(--text-muted); font-size: 0.85rem;">第 1 / 10 題</span>
+                        <span id="arena-sensory-badge" class="sensory-tag reading" style="margin-left: 4px;">📖 讀寫</span>
+                        <span id="arena-progress-text" style="color: var(--text-muted); font-size: 0.85rem; margin-left: 6px;">第 1 / 10 題</span>
                     </div>
 
                     <div class="combo-meter" id="arena-combo-display" style="visibility: hidden;">
@@ -220,9 +232,16 @@
                     <div class="time-progress-bar" id="arena-time-bar"></div>
                 </div>
 
-                <!-- 題目顯示板 -->
+                <!-- 題目顯示板 (支援讀寫算式 / 聽寫音波) -->
                 <div class="question-billboard" id="arena-question-text">
                     7 × 8
+                </div>
+
+                <!-- 聽寫模式專屬按鈕 -->
+                <div id="arena-dictation-controls" style="display: none; margin-bottom: 14px;">
+                    <button type="button" class="btn-replay-speech" id="btn-replay-speech" title="再聽一次口訣">
+                        🔊 重聽口訣一遍
+                    </button>
                 </div>
 
                 <!-- 答案顯示框 (虛擬與實體鍵盤同步輸入處) -->
@@ -365,9 +384,13 @@
                 <h3 class="modal-title">📕 易錯題重練簿</h3>
                 <button type="button" class="modal-close" id="btn-close-mistakes">&times;</button>
             </div>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
-                系統自動記錄您在練習中失誤過的算式。連續答對 2 次後將自動從錯題本移出！
-            </p>
+            <div style="background: rgba(244, 63, 94, 0.12); border: 1px solid rgba(244, 63, 94, 0.3); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 12px; font-size: 0.82rem; color: #fda4af;">
+                ⚠️ <strong>限時復習規則：</strong>所有錯題必須在 <strong>3 天 (72 小時)</strong> 內復習清空！若逾期未處理，將觸發<strong>降階懲罰 (退回 1 級)</strong>！
+            </div>
+            
+            <div id="mistakes-deadline-summary" style="margin-bottom: 12px; font-size: 0.86rem; font-weight: 700;">
+                <!-- 由 JavaScript 填充最急迫倒數 -->
+            </div>
             
             <div id="mistakes-list-container" style="max-height: 260px; overflow-y: auto; margin-bottom: 16px;">
                 <!-- 由 JavaScript 填充錯題列表 -->

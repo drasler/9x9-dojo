@@ -23,6 +23,7 @@ class SoundEngine {
                 this.speechSynth.onvoiceschanged = loadVoices;
             }
         }
+        this.lastQuestionParams = null;
     }
 
     // 延遲初始化 AudioContext (符合瀏覽器自動播放策略，使用者第一次點擊時解鎖)
@@ -165,9 +166,20 @@ class SoundEngine {
         });
     }
 
+    // 重複播放最後一次語音
+    replaySpeech() {
+        if (this.lastQuestionParams) {
+            const { factorA, factorB, isReverse, isFillA } = this.lastQuestionParams;
+            this.speakQuestion(factorA, factorB, isReverse, isFillA, true);
+        }
+    }
+
     // 播放中文口訣語音 (例如 "7 乘以 8 等於多少")
-    speakQuestion(factorA, factorB, isReverse = false, isFillA = false) {
-        if (!this.voiceEnabled || !this.speechSynth) return;
+    // forceSpeak: 聽寫模式下強制發聲 (即使預設開關未開)
+    speakQuestion(factorA, factorB, isReverse = false, isFillA = false, forceSpeak = false) {
+        this.lastQuestionParams = { factorA, factorB, isReverse, isFillA };
+
+        if ((!this.voiceEnabled && !forceSpeak) || !this.speechSynth) return;
 
         // 取消前一個未播完的語音
         this.speechSynth.cancel();
@@ -184,7 +196,7 @@ class SoundEngine {
         }
 
         const utter = new SpeechSynthesisUtterance(text);
-        utter.rate = 1.1; // 稍快，不拖沓
+        utter.rate = 1.15; // 國小四年級以上節奏俐落，不拖沓
         utter.pitch = 1.05;
         if (this.speechVoice) {
             utter.voice = this.speechVoice;
