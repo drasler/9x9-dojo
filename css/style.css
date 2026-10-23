@@ -1217,7 +1217,7 @@ body.in-arena #view-arena {
 }
 
 /* ==========================================================================
-   三級三通體系 (Sub-levels 3x3) 與靈獸伴學修練樣式
+   三級三通體系 (Sub-levels 3x3) 與奇獸伴學鍛鍊樣式
    ========================================================================== */
 .stage-sublevels-grid {
     display: grid;
@@ -1285,7 +1285,7 @@ body.in-arena #view-arena {
     color: var(--text-muted);
 }
 
-/* 靈獸與每日修練 (Gamification Bar) */
+/* 奇獸與每日鍛鍊 (Gamification Bar) */
 .gamify-row {
     display: flex;
     align-items: center;

@@ -857,7 +857,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             DOM.modalClearStars.innerHTML = `
-                <div style="font-size:1.05rem; font-weight:800; color:var(--accent-amber); margin-bottom:8px;">修練印記進度 (${res.clears} / 3)</div>
+                <div style="font-size:1.05rem; font-weight:800; color:var(--accent-amber); margin-bottom:8px;">通關印記進度 (${res.clears} / 3)</div>
                 <div style="display:flex; justify-content:center; align-items:center; gap:8px;">${clearStamps}</div>
                 <div style="font-size:0.82rem; color:var(--accent-emerald); margin-top:10px; font-weight:700;">✨ 奇獸伴學獲得 +120 EXP！</div>
             `;
@@ -879,7 +879,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         startTierAdventure(state.activeTierId, res.newSub);
                     };
                 } else {
-                    DOM.btnModalNext.textContent = `🔄 繼續第 ${res.clears + 1} 次修練`;
+                    DOM.btnModalNext.textContent = `🔄 繼續第 ${res.clears + 1} 次挑戰`;
                     DOM.btnModalNext.onclick = () => {
                         closeModal(DOM.modalStageClear);
                         startTierAdventure(state.activeTierId, state.activeSubLevel);
@@ -892,7 +892,7 @@ document.addEventListener('DOMContentLoaded', () => {
             openModal(DOM.modalStageClear);
         } else if (state.gameMode === 'exam_time' || state.gameMode === 'exam_count') {
             let rank = '初階達人';
-            if (state.correctCount >= 50 && accuracy >= 0.95) rank = '九段宗師';
+            if (state.correctCount >= 50 && accuracy >= 0.95) rank = '九段大師';
             else if (state.correctCount >= 35 && accuracy >= 0.90) rank = '高階專家';
             else if (state.correctCount >= 20 && accuracy >= 0.85) rank = '進階好手';
 
@@ -1020,7 +1020,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (DOM.modalBeastFullname) DOM.modalBeastFullname.textContent = `${bInfo.name} (Lv.${p.beast.level})`;
         if (DOM.modalBeastTitle) DOM.modalBeastTitle.textContent = bInfo.title;
         if (DOM.modalBeastExpBar) DOM.modalBeastExpBar.style.width = `${pct}%`;
-        if (DOM.modalBeastExpText) DOM.modalBeastExpText.textContent = `修煉經驗：${p.beast.exp} / ${maxExp} EXP (${pct}%)`;
+        if (DOM.modalBeastExpText) DOM.modalBeastExpText.textContent = `成長經驗：${p.beast.exp} / ${maxExp} EXP (${pct}%)`;
 
         openModal(DOM.modalBeast);
     }

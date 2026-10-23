@@ -22,7 +22,7 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=2.4.0', { updateViaCache: 'none' })
+          navigator.serviceWorker.register('./sw.js?v=2.5.0', { updateViaCache: 'none' })
             .then((reg) => {
               // 主動檢查遠端是否有更新
               reg.update();
@@ -42,7 +42,7 @@
     </script>
 
     <!-- Stylesheets (含版本防快取) -->
-    <link rel="stylesheet" href="css/style.css?v=2.4.0">
+    <link rel="stylesheet" href="css/style.css?v=2.5.0">
 </head>
 <body>
 
@@ -82,16 +82,16 @@
         <!-- 3 天錯題未清空降階警告橫幅容器 -->
         <div id="overdue-banner-container"></div>
 
-        <!-- 每日修練打卡與奇獸養成列 -->
+        <!-- 每日鍛鍊打卡與奇獸養成列 -->
         <div class="gamify-row" id="gamify-bar">
-            <div class="beast-pill" id="beast-status-pill" title="點擊查看奇獸夥伴修煉指南與進化形態！" role="button" tabindex="0">
+            <div class="beast-pill" id="beast-status-pill" title="點擊查看奇獸夥伴成長指南與進化形態！" role="button" tabindex="0">
                 <span id="beast-icon">🥚</span>
                 <span id="beast-name">乘法奇獸蛋</span>
                 <span id="beast-level" style="font-size:0.75rem; opacity:0.85;">Lv.1</span>
                 <span style="font-size:0.75rem; color:var(--accent-primary); margin-left:3px;" aria-hidden="true">ℹ️</span>
             </div>
-            <div class="streak-pill" id="streak-status-pill" title="每日登入練習維持修煉火焰！">
-                <span>🔥 連續修練</span>
+            <div class="streak-pill" id="streak-status-pill" title="每日登入練習維持連續紀錄！">
+                <span>🔥 連續鍛鍊</span>
                 <strong id="streak-days">1</strong> 天
             </div>
         </div>
@@ -121,7 +121,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                 <div>
                     <h2 style="font-size: 1.3rem; font-weight: 800;">九段階級進階之路</h2>
-                    <p style="font-size: 0.88rem; color: var(--text-muted);">循序漸進解鎖段位徽章，挑戰由淺入深的九大乘法修練階梯！</p>
+                    <p style="font-size: 0.88rem; color: var(--text-muted);">循序漸進解鎖段位徽章，挑戰由淺入深的九大乘法訓練階梯！</p>
                 </div>
             </div>
             <div class="adventure-grid" id="adventure-stages-grid">
@@ -477,11 +477,11 @@
         </div>
     </div>
 
-    <!-- 彈窗 5: 奇獸夥伴說明與修煉指南 Modal -->
+    <!-- 彈窗 5: 奇獸夥伴說明與成長指南 Modal -->
     <div class="modal-overlay" id="modal-beast">
         <div class="modal-box" style="max-width: 520px;">
             <div class="modal-header">
-                <h3 class="modal-title">🐾 奇獸夥伴修煉指南</h3>
+                <h3 class="modal-title">🐾 奇獸夥伴成長指南</h3>
                 <button type="button" class="modal-close" id="btn-close-beast">&times;</button>
             </div>
             
@@ -489,18 +489,18 @@
             <div style="background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: var(--radius-md); padding: 16px; text-align: center; margin-bottom: 16px;">
                 <div id="modal-beast-big-icon" style="font-size: 3.2rem; line-height: 1.1; margin-bottom: 6px;">🥚</div>
                 <div id="modal-beast-fullname" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main);">乘法奇獸蛋 (Lv.1)</div>
-                <div id="modal-beast-title" style="font-size: 0.85rem; color: var(--accent-indigo); margin-top: 4px; font-weight: 600;">初生奇卵・蘊育心算潛能</div>
+                <div id="modal-beast-title" style="font-size: 0.85rem; color: var(--accent-indigo); margin-top: 4px; font-weight: 600;">初生奇獸蛋・沉睡的數學潛能</div>
                 <div style="margin-top: 12px; background: rgba(0,0,0,0.3); border-radius: 999px; height: 10px; overflow: hidden; position: relative;">
                     <div id="modal-beast-exp-bar" style="width: 20%; height: 100%; background: linear-gradient(90deg, #6366f1, #10b981); border-radius: 999px; transition: width 0.4s ease;"></div>
                 </div>
-                <div id="modal-beast-exp-text" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">修煉經驗：0 / 150 EXP</div>
+                <div id="modal-beast-exp-text" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">成長經驗：0 / 150 EXP</div>
             </div>
 
-            <!-- 使用與修煉說明 -->
+            <!-- 使用與成長說明 -->
             <div style="font-size: 0.86rem; line-height: 1.6; color: var(--text-main); margin-bottom: 16px;">
                 <h4 style="font-size: 0.95rem; margin-bottom: 6px; color: var(--accent-amber);">✨ 奇獸是什麼？如何使用？</h4>
                 <p style="color: var(--text-muted); margin-bottom: 12px;">
-                    奇獸是你專屬的<strong>乘法伴學神獸</strong>！不論你在階級闖關、隨機考試或專項特訓中作答，奇獸都會默默陪伴你。只要你答對題目或成功闖關，奇獸就會吸收心算靈氣累積 EXP，與你一同進化成長！
+                    奇獸是你專屬的<strong>乘法伴學神獸</strong>！不論你在階級闖關、隨機考試或專項特訓中作答，奇獸都會默默陪伴你。只要你答對題目或成功闖關，奇獸就會吸收心算能量累積 EXP，與你一同進化成長！
                 </p>
 
                 <h4 style="font-size: 0.95rem; margin-bottom: 6px; color: var(--accent-emerald);">⚡ 經驗值（EXP）獲取方式</h4>
@@ -512,27 +512,27 @@
                 <h4 style="font-size: 0.95rem; margin-bottom: 8px; color: var(--accent-primary);">🐾 奇獸四大進化形態（全 30 級）</h4>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.82rem;">
                     <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-card); border-radius: 8px; padding: 10px;">
-                        🥚 <strong>Lv.1~4 奇獸神秘蛋</strong><br><span style="color:var(--text-muted); font-size:0.75rem;">啟蒙萌芽・凝聚心算潛能</span>
+                        🥚 <strong>Lv.1~4 乘法奇獸蛋</strong><br><span style="color:var(--text-muted); font-size:0.75rem;">啟蒙萌芽・凝聚心算潛能</span>
                     </div>
                     <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-card); border-radius: 8px; padding: 10px;">
-                        🦊 <strong>Lv.5~11 靈火狐</strong><br><span style="color:var(--text-muted); font-size:0.75rem;">機敏伶俐・直覺反射倍增</span>
+                        🦊 <strong>Lv.5~11 烈焰赤狐</strong><br><span style="color:var(--text-muted); font-size:0.75rem;">機敏靈巧・心算直覺覺醒</span>
                     </div>
                     <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-card); border-radius: 8px; padding: 10px;">
-                        🐆 <strong>Lv.12~19 疾風獵豹</strong><br><span style="color:var(--text-muted); font-size:0.75rem;">迅捷神速・秒答百步穿楊</span>
+                        🐆 <strong>Lv.12~19 疾風獵豹</strong><br><span style="color:var(--text-muted); font-size:0.75rem;">迅捷如風・秒答百步穿楊</span>
                     </div>
                     <div style="background: rgba(255,255,255,0.04); border: 1px solid var(--border-card); border-radius: 8px; padding: 10px;">
-                        🐉 <strong>Lv.20~30 九天神龍</strong><br><span style="color:var(--text-muted); font-size:0.75rem;">大宗師終極守護巨龍</span>
+                        🐲 <strong>Lv.20~30 星穹巨龍</strong><br><span style="color:var(--text-muted); font-size:0.75rem;">傳奇守護者・極速心算大師</span>
                     </div>
                 </div>
             </div>
 
-            <button type="button" class="btn btn-primary btn-block" id="btn-close-beast-confirm">我知道了，繼續修煉！</button>
+            <button type="button" class="btn btn-primary btn-block" id="btn-close-beast-confirm">我知道了，繼續挑戰！</button>
         </div>
     </div>
 
     <!-- 核心腳本載入 (含版本防快取) -->
-    <script src="js/audio.js?v=2.4.0"></script>
-    <script src="js/engine.js?v=2.4.0"></script>
-    <script src="js/app.js?v=2.4.0"></script>
+    <script src="js/audio.js?v=2.5.0"></script>
+    <script src="js/engine.js?v=2.5.0"></script>
+    <script src="js/app.js?v=2.5.0"></script>
 </body>
 </html>

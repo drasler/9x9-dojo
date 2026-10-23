@@ -3,10 +3,10 @@
  * 國小四年級以上高強度特化版本：
  * 1. 全階 1~9 階皆採用 2~9 全段乘法。
  * 2. 階級提升體系（三級三通）：每一階均劃分為「下級、中級、上級」三個小等級，
- *    每一級皆須過關 3 次（累積 3 顆修練印章 ●●●）才能晉升至下一級，上級過關 3 次方可晉階！
+ *    每一級皆須過關 3 次（累積 3 枚通關印章 ●●●）才能晉升至下一級，上級過關 3 次方可晉階！
  * 3. 低階時間限制放寬（一階下級 8.0秒、中級 7.0秒、上級 6.0秒），建立兒童心算自信與扎實基礎。
  * 4. 視覺讀寫 (Reading) 與聽力聽寫 (Dictation) 分階分離。
- * 5. 奇獸伴學夥伴養成系統（奇獸蛋 -> 靈火狐 -> 疾風獵豹 -> 九天神龍）與每日連續修練打卡 (Streak)。
+ * 5. 奇獸伴學夥伴養成系統（奇獸蛋 -> 烈焰赤狐 -> 疾風獵豹 -> 星穹巨龍）與每日連續鍛鍊打卡 (Streak)。
  * 6. 錯題復習限時 3 天 (72 小時)，逾期未清空觸發降階懲罰。
  */
 
@@ -153,9 +153,9 @@ const TIERS_CONFIG = [
     },
     {
         id: 9,
-        tier: '九階・巔峰大宗師',
+        tier: '九階・巔峰大師',
         title: '百題零容錯極致考核',
-        desc: '百題 100% 正確率考核！錯一題即淘汰，唯有大宗師方能登頂',
+        desc: '百題 100% 正確率考核！錯一題即淘汰，唯有頂尖高手方能登頂',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
         sensoryMode: 'mix',
         reverseRate: 0.4,
@@ -190,7 +190,7 @@ class MultiplicationEngine {
             maxCombo: 0,
             mistakes: {},         // 錯題本
             certificates: [],
-            streak: { count: 0, lastDate: '' }, // 每日連續修練打卡
+            streak: { count: 0, lastDate: '' }, // 每日連續鍛鍊打卡
             beast: { exp: 0, level: 1 },         // 奇獸夥伴養成
             lastDemoteCheck: Date.now()
         };
@@ -316,7 +316,7 @@ class MultiplicationEngine {
             // 獎勵奇獸 EXP：每次通關獲得 120 EXP
             this.addBeastExp(120);
 
-            // 更新每日修練連勝打卡
+            // 更新每日連續鍛鍊打卡
             this.updateDailyStreak();
 
             this.saveProfile();
@@ -334,7 +334,7 @@ class MultiplicationEngine {
     }
 
     /**
-     * 每日連續修練打卡 (Streak)
+     * 每日連續鍛鍊打卡 (Daily Streak)
      */
     updateDailyStreak() {
         const now = new Date();
@@ -396,13 +396,13 @@ class MultiplicationEngine {
 
     getBeastInfo(level) {
         if (level < 4) {
-            return { name: '乘法奇獸蛋', icon: '🥚', title: '初生奇卵・蘊育心算潛能' };
+            return { name: '乘法奇獸蛋', icon: '🥚', title: '初生奇獸蛋・沉睡的數學潛能' };
         } else if (level < 9) {
-            return { name: '靈火狐', icon: '🦊', title: '機敏伶俐・直覺反應倍增' };
+            return { name: '烈焰赤狐', icon: '🦊', title: '機敏靈巧・心算直覺覺醒' };
         } else if (level < 16) {
-            return { name: '疾風獵豹', icon: '🐆', title: '迅疾如風・秒答百步穿楊' };
+            return { name: '疾風獵豹', icon: '🐆', title: '迅捷如風・秒答百步穿楊' };
         } else {
-            return { name: '九天神龍', icon: '🐉', title: '乘法大宗師・通天霸氣修為' };
+            return { name: '星穹巨龍', icon: '🐲', title: '傳奇守護者・極速心算大師' };
         }
     }
 
