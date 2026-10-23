@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>9x9 乘法大師 - 九九乘法分級闖關與隨機檢定系統</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="專業九九乘法階級闖關與隨機測驗網站，提供九段天梯進階體系、即時語音朗讀、錯題特訓本與檢定合格證書，支援手機平板隨時隨地離線練習。">
+    <meta name="keywords" content="九九乘法, 99乘法表, 數學練習, 乘法測驗, 國小數學, 階級闖關, 隨機考試, 心算特訓">
+    <meta property="og:title" content="9x9 乘法大師 - 九九乘法分級闖關與隨機檢定系統">
+    <meta property="og:description" content="全方位階級晉升、隨機檢定考試、行動版觸控鍵盤與錯題重練，隨時隨地熟練九九乘法！">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#090d16">
+
+    <!-- Web App Manifest & Icons -->
+    <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.svg">
+
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(() => {});
+        });
+      }
+    </script>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- 頂部導航列 -->
+        <header class="top-nav" role="banner">
+            <div class="brand" id="btn-brand-home" title="返回主頁面">
+                <div class="brand-icon">✖️</div>
+                <div>
+                    <h1 class="brand-title">9x9 乘法大師</h1>
+                </div>
+                <span class="brand-badge" id="header-user-tier">一階・初出茅廬</span>
+            </div>
+
+            <nav class="nav-actions" aria-label="工具設定">
+                <button type="button" class="icon-btn" id="btn-toggle-sound" title="切換音效 (開/關)" aria-label="切換音效">🔊</button>
+                <button type="button" class="icon-btn" id="btn-toggle-voice" title="切換真人語音朗讀口訣" aria-label="切換語音朗讀">🗣️</button>
+                <button type="button" class="icon-btn" id="btn-open-chart" title="九九乘法對照表" aria-label="開啟九九乘法對照表">📖</button>
+                <button type="button" class="icon-btn" id="btn-open-mistakes" title="錯題復習本" aria-label="開啟錯題本">
+                    📕 <span id="mistake-count-badge" style="display:none; position:absolute; top:-2px; right:-2px; background:var(--accent-rose); color:#fff; border-radius:50%; width:16px; height:16px; font-size:10px; font-weight:bold; align-items:center; justify-content:center;">0</span>
+                </button>
+                <button type="button" class="icon-btn" id="btn-toggle-theme" title="切換深色/淺色主題" aria-label="切換主題">🌓</button>
+            </nav>
+        </header>
+
+        <!-- 模式切換頁籤 -->
+        <nav class="mode-tabs" role="tablist" id="main-mode-tabs">
+            <button type="button" class="mode-tab active" data-mode="adventure" role="tab" id="tab-adventure" aria-selected="true">
+                🏆 階級天梯闖關
+            </button>
+            <button type="button" class="mode-tab" data-mode="exam" role="tab" id="tab-exam" aria-selected="false">
+                ⏱️ 隨機檢定考試
+            </button>
+            <button type="button" class="mode-tab" data-mode="practice" role="tab" id="tab-practice" aria-selected="false">
+                🎯 自由專項特訓
+            </button>
+        </nav>
+
+        <!-- 個人學習統計概覽 Banner -->
+        <section class="stats-banner" aria-label="學習成就統計">
+            <div class="stat-box">
+                <div class="stat-label">最高段位</div>
+                <div class="stat-val accent-primary" id="stat-current-tier">Lv.1</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">關卡星級</div>
+                <div class="stat-val accent-amber" id="stat-total-stars">0 ★</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">累積答對</div>
+                <div class="stat-val accent-emerald" id="stat-total-correct">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">最高連擊</div>
+                <div class="stat-val accent-amber" id="stat-max-combo">0 Combo</div>
+            </div>
+        </section>
+
+        <!-- 主視圖 1: 🏆 階級闖關大地圖 (Adventure Map) -->
+        <main id="view-adventure" class="glass-panel">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div>
+                    <h2 style="font-size: 1.3rem; font-weight: 800;">九段階級進階之路</h2>
+                    <p style="font-size: 0.88rem; color: var(--text-muted);">循序漸進解鎖段位徽章，挑戰由淺入深的九大乘法修練階梯！</p>
+                </div>
+            </div>
+            <div class="adventure-grid" id="adventure-stages-grid">
+                <!-- 由 JavaScript 動態生成 9 個關卡卡片 -->
+            </div>
+        </main>
+
+        <!-- 主視圖 2: ⏱️ 隨機檢定考試設定 (Exam Config) -->
+        <section id="view-exam" class="glass-panel" style="display:none;">
+            <h2 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 8px;">九九乘法能力檢定考</h2>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px;">
+                全表 81 道題目隨機抽題，模擬學校檢定與競賽！考試合格將頒發專屬證書。
+            </p>
+
+            <div style="display: flex; flex-direction: column; gap: 18px; max-width: 500px; margin: 0 auto;">
+                <div>
+                    <label style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 8px;">
+                        測驗類型：
+                    </label>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" class="btn btn-secondary flex-1 exam-type-btn active" data-type="time" style="flex:1;">⏱️ 限時挑戰</button>
+                        <button type="button" class="btn btn-secondary flex-1 exam-type-btn" data-type="count" style="flex:1;">📝 定量題數</button>
+                    </div>
+                </div>
+
+                <div id="exam-time-options">
+                    <label style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 8px;">
+                        測驗時間：
+                    </label>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" class="btn btn-secondary flex-1 exam-opt-btn active" data-val="60" style="flex:1;">60 秒 (急速)</button>
+                        <button type="button" class="btn btn-secondary flex-1 exam-opt-btn" data-val="120" style="flex:1;">120 秒 (標準)</button>
+                        <button type="button" class="btn btn-secondary flex-1 exam-opt-btn" data-val="180" style="flex:1;">180 秒 (充裕)</button>
+                    </div>
+                </div>
+
+                <div id="exam-count-options" style="display:none;">
+                    <label style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 8px;">
+                        題數規模：
+                    </label>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" class="btn btn-secondary flex-1 exam-count-btn active" data-val="20" style="flex:1;">20 題 (快篩)</button>
+                        <button type="button" class="btn btn-secondary flex-1 exam-count-btn" data-val="40" style="flex:1;">40 題 (標準)</button>
+                        <button type="button" class="btn btn-secondary flex-1 exam-count-btn" data-val="81" style="flex:1;">81 題 (全表挑戰)</button>
+                    </div>
+                </div>
+
+                <div style="margin-top: 10px;">
+                    <button type="button" class="btn btn-primary btn-block" id="btn-start-exam" style="padding: 16px; font-size: 1.15rem;">
+                        🚀 開始檢定考試
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 主視圖 3: 🎯 自由專項特訓設定 (Practice Config) -->
+        <section id="view-practice" class="glass-panel" style="display:none;">
+            <h2 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 8px;">自訂專項乘法練習</h2>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px;">
+                針對特定數字進行特訓（例如只想單獨練 7 與 8），可選擇順序出現建立規律，或隨機打亂加深反射！
+            </p>
+
+            <div style="max-width: 600px; margin: 0 auto;">
+                <label style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 10px;">
+                    選擇練習段數 (可複選)：
+                </label>
+                <div class="filter-row" id="practice-factors-selector">
+                    <button type="button" class="factor-btn active" data-factor="all">全部</button>
+                    <button type="button" class="factor-btn" data-factor="2">2</button>
+                    <button type="button" class="factor-btn" data-factor="3">3</button>
+                    <button type="button" class="factor-btn" data-factor="4">4</button>
+                    <button type="button" class="factor-btn" data-factor="5">5</button>
+                    <button type="button" class="factor-btn" data-factor="6">6</button>
+                    <button type="button" class="factor-btn" data-factor="7">7</button>
+                    <button type="button" class="factor-btn" data-factor="8">8</button>
+                    <button type="button" class="factor-btn" data-factor="9">9</button>
+                </div>
+
+                <div style="display: flex; gap: 12px; margin: 20px 0;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">出題順序：</label>
+                        <select id="practice-order-select" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-card); background: var(--bg-card); color: var(--text-main); font-weight: 700;">
+                            <option value="random">隨機打亂 (推薦)</option>
+                            <option value="sequence">依序循環 (1~9)</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-size: 0.85rem; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;">題型方向：</label>
+                        <select id="practice-type-select" style="width: 100%; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-card); background: var(--bg-card); color: var(--text-main); font-weight: 700;">
+                            <option value="normal">標準題目 (A × B = ?)</option>
+                            <option value="reverse">逆向填空 (? × B = C)</option>
+                            <option value="mix">正反混合 (50% 隨機)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="button" class="btn btn-primary btn-block" id="btn-start-practice" style="padding: 16px; font-size: 1.15rem;">
+                    🎯 開始自由特訓
+                </button>
+            </div>
+        </section>
+
+        <!-- 作答戰場視圖 (Quiz Battle Arena) -->
+        <section id="view-arena" class="glass-panel" style="display:none;">
+            <div class="battle-arena">
+                <!-- 狀態資訊列 -->
+                <div class="arena-status-bar">
+                    <div class="status-pill">
+                        <span id="arena-mode-badge" style="background: rgba(99, 102, 241, 0.2); color: var(--primary-light); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem;">闖關模式</span>
+                        <span id="arena-progress-text" style="color: var(--text-muted); font-size: 0.85rem;">第 1 / 10 題</span>
+                    </div>
+
+                    <div class="combo-meter" id="arena-combo-display" style="visibility: hidden;">
+                        🔥 3 COMBO
+                    </div>
+
+                    <div class="status-pill">
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">⏱️ 剩餘:</span>
+                        <span id="arena-time-text" style="font-size: 1.1rem; font-weight: 800; color: var(--accent-amber);">30s</span>
+                    </div>
+                </div>
+
+                <!-- 計時進度條 -->
+                <div class="time-progress-wrap">
+                    <div class="time-progress-bar" id="arena-time-bar"></div>
+                </div>
+
+                <!-- 題目顯示板 -->
+                <div class="question-billboard" id="arena-question-text">
+                    7 × 8
+                </div>
+
+                <!-- 答案顯示框 (虛擬與實體鍵盤同步輸入處) -->
+                <div class="answer-display-box" id="arena-answer-box" title="點擊輸入或使用鍵盤數字鍵">
+                    <span id="arena-answer-val"></span>
+                </div>
+
+                <!-- 智慧觸控專屬大按鈕九宮格鍵盤 -->
+                <div class="numpad" id="arena-numpad" role="group" aria-label="數字輸入鍵盤">
+                    <button type="button" class="num-key" data-key="1">1</button>
+                    <button type="button" class="num-key" data-key="2">2</button>
+                    <button type="button" class="num-key" data-key="3">3</button>
+                    <button type="button" class="num-key" data-key="4">4</button>
+                    <button type="button" class="num-key" data-key="5">5</button>
+                    <button type="button" class="num-key" data-key="6">6</button>
+                    <button type="button" class="num-key" data-key="7">7</button>
+                    <button type="button" class="num-key" data-key="8">8</button>
+                    <button type="button" class="num-key" data-key="9">9</button>
+                    <button type="button" class="num-key func-key" data-key="clear" title="清空">C</button>
+                    <button type="button" class="num-key" data-key="0">0</button>
+                    <button type="button" class="num-key func-key" data-key="backspace" title="倒退刪除">⌫</button>
+                </div>
+
+                <!-- 作答控制列 -->
+                <div style="display: flex; gap: 12px; margin-top: 14px; width: 100%; max-width: 360px;">
+                    <button type="button" class="btn btn-secondary" id="btn-quit-arena" style="flex: 1;">
+                        ⏸️ 退出本次練習
+                    </button>
+                    <button type="button" class="btn btn-success" id="btn-submit-answer" style="flex: 1.5; font-weight: 800;">
+                        送出答案 ↵
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 頁腳版權與資訊 -->
+        <footer class="app-footer">
+            <p>9x9 乘法大師 &copy; 2026 ・ 專為大腦肌肉記憶打造的極速乘法訓練系統</p>
+            <p style="margin-top: 6px;">支援離線使用 PWA ・ 跨平台響應式佈局 ・ 零伺服器極速部署</p>
+        </footer>
+    </div>
+
+    <!-- 彈窗 1: 闖關結算 Modal -->
+    <div class="modal-overlay" id="modal-stage-clear">
+        <div class="modal-box text-center">
+            <div style="font-size: 3.5rem; margin-bottom: 10px;" id="modal-clear-icon">🎉</div>
+            <h3 class="modal-title" id="modal-clear-title" style="text-align: center; margin-bottom: 6px;">關卡挑戰成功！</h3>
+            <div id="modal-clear-stars" style="font-size: 2.2rem; margin: 12px 0;">
+                <span class="filled">★</span><span class="filled">★</span><span class="filled">★</span>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.04); border-radius: var(--radius-md); padding: 14px; margin-bottom: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">答對率</div>
+                    <div style="font-size: 1.25rem; font-weight: 800; color: var(--accent-emerald);" id="modal-clear-accuracy">100%</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted);">平均速度</div>
+                    <div style="font-size: 1.25rem; font-weight: 800; color: var(--primary-light);" id="modal-clear-speed">1.8s/題</div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn btn-secondary flex-1" id="btn-modal-retry" style="flex: 1;">再練一次</button>
+                <button type="button" class="btn btn-primary flex-1" id="btn-modal-next" style="flex: 1.2;">下一關卡 ➔</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 彈窗 2: 檢定考試結果與合格證書 Modal -->
+    <div class="modal-overlay" id="modal-exam-result">
+        <div class="modal-box">
+            <div class="certificate-card" id="certificate-print-area">
+                <div style="font-size: 0.8rem; letter-spacing: 2px; color: var(--accent-amber); font-weight: 800; margin-bottom: 6px;">
+                    ✦ NATIONAL MULTIPLICATION PROFICIENCY ✦
+                </div>
+                <h3 style="font-size: 1.4rem; font-weight: 900; margin-bottom: 12px;">九九乘法能力合格證書</h3>
+                
+                <div style="font-size: 0.95rem; margin-bottom: 16px; color: var(--text-muted);">
+                    茲證明學員於九九乘法全域隨機檢定中表現優異，特頒此證。
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; background: rgba(0,0,0,0.3); padding: 12px; border-radius: var(--radius-md);">
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">檢定評級</div>
+                        <div style="font-size: 1.1rem; font-weight: 800; color: var(--accent-amber);" id="cert-rank">九段宗師</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">正確率</div>
+                        <div style="font-size: 1.1rem; font-weight: 800; color: var(--accent-emerald);" id="cert-accuracy">96%</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">答對題數</div>
+                        <div style="font-size: 1.1rem; font-weight: 800; color: var(--primary-light);" id="cert-score">48 題</div>
+                    </div>
+                </div>
+
+                <div style="font-size: 0.78rem; color: var(--text-dim); text-align: left;">
+                    證書編號：<span id="cert-serial">CERT-2026-X99</span><br>
+                    認證日期：<span id="cert-date">2026年10月23日</span>
+                </div>
+
+                <div class="cert-seal">
+                    CERTIFIED<br>合 格<br>★★★★★
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn btn-secondary flex-1" id="btn-cert-close" style="flex: 1;">關閉</button>
+                <button type="button" class="btn btn-primary flex-1" id="btn-cert-again" style="flex: 1.2;">重新檢定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 彈窗 3: 九九乘法口訣對照表 Modal -->
+    <div class="modal-overlay" id="modal-chart">
+        <div class="modal-box" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3 class="modal-title">📖 九九乘法口訣對照表</h3>
+                <button type="button" class="modal-close" id="btn-close-chart">&times;</button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">
+                點擊任意格子可即時發音並高亮對應行列，助於掌握乘法口訣記憶：
+            </p>
+            <div class="mult-table-wrap">
+                <table class="mult-table" id="interactive-mult-table">
+                    <!-- 由 JavaScript 動態生成 9x9 表格 -->
+                </table>
+            </div>
+            <div style="margin-top: 14px;">
+                <button type="button" class="btn btn-secondary btn-block" id="btn-chart-bottom-close">關閉乘法表</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 彈窗 4: 錯題復習本 Modal -->
+    <div class="modal-overlay" id="modal-mistakes">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">📕 易錯題重練簿</h3>
+                <button type="button" class="modal-close" id="btn-close-mistakes">&times;</button>
+            </div>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 14px;">
+                系統自動記錄您在練習中失誤過的算式。連續答對 2 次後將自動從錯題本移出！
+            </p>
+            
+            <div id="mistakes-list-container" style="max-height: 260px; overflow-y: auto; margin-bottom: 16px;">
+                <!-- 由 JavaScript 填充錯題列表 -->
+            </div>
+
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn btn-secondary flex-1" id="btn-clear-mistakes" style="flex: 1;">清空記錄</button>
+                <button type="button" class="btn btn-primary flex-1" id="btn-drill-mistakes" style="flex: 1.3;">🔥 立即錯題特訓</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 核心腳本載入 -->
+    <script src="js/audio.js"></script>
+    <script src="js/engine.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
