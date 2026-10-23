@@ -1073,6 +1073,28 @@ document.addEventListener('DOMContentLoaded', () => {
             startExam();
         });
 
+        const btnForceRefresh = document.getElementById('btn-force-refresh');
+        if (btnForceRefresh) {
+            btnForceRefresh.addEventListener('click', async () => {
+                btnForceRefresh.textContent = '⏳ 清理中...';
+                try {
+                    if ('caches' in window) {
+                        const keys = await caches.keys();
+                        await Promise.all(keys.map(k => caches.delete(k)));
+                    }
+                    if ('serviceWorker' in navigator) {
+                        const registrations = await navigator.serviceWorker.getRegistrations();
+                        for (let reg of registrations) {
+                            await reg.unregister();
+                        }
+                    }
+                } catch (e) {
+                    console.error('Cache clear error:', e);
+                }
+                window.location.reload(true);
+            });
+        }
+
         [DOM.modalChart, DOM.modalMistakes].forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
