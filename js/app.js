@@ -144,7 +144,18 @@ document.addEventListener('DOMContentLoaded', () => {
         mistakesDeadlineSummary: document.getElementById('mistakes-deadline-summary'),
         mistakesListContainer: document.getElementById('mistakes-list-container'),
         btnClearMistakes: document.getElementById('btn-clear-mistakes'),
-        btnDrillMistakes: document.getElementById('btn-drill-mistakes')
+        btnDrillMistakes: document.getElementById('btn-drill-mistakes'),
+
+        // 奇獸伴學 Modal
+        beastStatusPill: document.getElementById('beast-status-pill'),
+        modalBeast: document.getElementById('modal-beast'),
+        btnCloseBeast: document.getElementById('btn-close-beast'),
+        btnCloseBeastConfirm: document.getElementById('btn-close-beast-confirm'),
+        modalBeastBigIcon: document.getElementById('modal-beast-big-icon'),
+        modalBeastFullname: document.getElementById('modal-beast-fullname'),
+        modalBeastTitle: document.getElementById('modal-beast-title'),
+        modalBeastExpBar: document.getElementById('modal-beast-exp-bar'),
+        modalBeastExpText: document.getElementById('modal-beast-exp-text')
     };
 
     // ==========================================
@@ -217,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.statTotalCorrect.textContent = p.totalCorrect.toLocaleString();
         DOM.statMaxCombo.textContent = `${p.maxCombo} Combo`;
 
-        // 靈獸與每日連勝打卡更新
+        // 奇獸與每日連勝打卡更新
         if (p.beast) {
             const bInfo = engine.getBeastInfo(p.beast.level);
             const elIcon = document.getElementById('beast-icon');
@@ -848,7 +859,7 @@ document.addEventListener('DOMContentLoaded', () => {
             DOM.modalClearStars.innerHTML = `
                 <div style="font-size:1.05rem; font-weight:800; color:var(--accent-amber); margin-bottom:8px;">修練印記進度 (${res.clears} / 3)</div>
                 <div style="display:flex; justify-content:center; align-items:center; gap:8px;">${clearStamps}</div>
-                <div style="font-size:0.82rem; color:var(--accent-emerald); margin-top:10px; font-weight:700;">✨ 靈獸伴學獲得 +120 EXP！</div>
+                <div style="font-size:0.82rem; color:var(--accent-emerald); margin-top:10px; font-weight:700;">✨ 奇獸伴學獲得 +120 EXP！</div>
             `;
             DOM.modalClearAccuracy.textContent = `${Math.round(accuracy * 100)}% (合格標準: ${Math.round(subCfg.passRate * 100)}%)`;
             DOM.modalClearSpeed.textContent = `${avgSpeed}s/題 (限時 ${subCfg.timePerQuestion}s)`;
@@ -995,6 +1006,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     function closeModal(modalEl) {
         modalEl.classList.remove('open');
+    }
+
+    // 打開奇獸伴學說明視窗
+    function openBeastModal() {
+        const p = engine.profile;
+        if (!p.beast) p.beast = { exp: 0, level: 1 };
+        const bInfo = engine.getBeastInfo(p.beast.level);
+        const maxExp = p.beast.level * 150;
+        const pct = Math.min(100, Math.round((p.beast.exp / maxExp) * 100));
+
+        if (DOM.modalBeastBigIcon) DOM.modalBeastBigIcon.textContent = bInfo.icon;
+        if (DOM.modalBeastFullname) DOM.modalBeastFullname.textContent = `${bInfo.name} (Lv.${p.beast.level})`;
+        if (DOM.modalBeastTitle) DOM.modalBeastTitle.textContent = bInfo.title;
+        if (DOM.modalBeastExpBar) DOM.modalBeastExpBar.style.width = `${pct}%`;
+        if (DOM.modalBeastExpText) DOM.modalBeastExpText.textContent = `修煉經驗：${p.beast.exp} / ${maxExp} EXP (${pct}%)`;
+
+        openModal(DOM.modalBeast);
     }
 
     // ==========================================
@@ -1187,12 +1215,35 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        [DOM.modalChart, DOM.modalMistakes].forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    closeModal(modal);
+        // 點擊奇獸膠囊查看指南
+        if (DOM.beastStatusPill) {
+            DOM.beastStatusPill.addEventListener('click', () => {
+                sound.playClick();
+                openBeastModal();
+            });
+            DOM.beastStatusPill.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    sound.playClick();
+                    openBeastModal();
                 }
             });
+        }
+        if (DOM.btnCloseBeast) {
+            DOM.btnCloseBeast.addEventListener('click', () => closeModal(DOM.modalBeast));
+        }
+        if (DOM.btnCloseBeastConfirm) {
+            DOM.btnCloseBeastConfirm.addEventListener('click', () => closeModal(DOM.modalBeast));
+        }
+
+        [DOM.modalChart, DOM.modalMistakes, DOM.modalBeast].forEach(modal => {
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        closeModal(modal);
+                    }
+                });
+            }
         });
     }
 

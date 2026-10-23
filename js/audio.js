@@ -10,13 +10,23 @@ class SoundEngine {
         this.speechSynth = window.speechSynthesis || null;
         this.speechVoice = null;
 
-        // 初始化語音聲音選擇
+        // 初始化語音聲音選擇 (嚴格優先匹配台灣繁體國語口音)
         if (this.speechSynth) {
             const loadVoices = () => {
                 const voices = this.speechSynth.getVoices();
-                // 優先選擇台灣中文或通用中文
-                this.speechVoice = voices.find(v => v.lang.includes('zh-TW') || v.lang.includes('zh-HK')) ||
-                                   voices.find(v => v.lang.startsWith('zh')) || null;
+                // 優先選擇台灣繁體中文 (zh-TW, cmn-TW, 台灣在地語音)
+                this.speechVoice = voices.find(v => {
+                    const lang = (v.lang || '').replace('_', '-').toLowerCase();
+                    const name = (v.name || '').toLowerCase();
+                    return lang === 'zh-tw' || lang === 'cmn-tw' || lang === 'cmn-hant-tw' ||
+                           name.includes('taiwan') || name.includes('臺灣') || name.includes('台灣') ||
+                           name.includes('meijia') || name.includes('mei-jia') ||
+                           name.includes('hanhan') || name.includes('yating') ||
+                           name.includes('hsiaochen') || name.includes('hsiao-chen');
+                }) || voices.find(v => {
+                    const lang = (v.lang || '').replace('_', '-').toLowerCase();
+                    return lang.startsWith('zh-tw') || lang.startsWith('cmn-tw');
+                }) || voices.find(v => (v.lang || '').toLowerCase().startsWith('zh')) || null;
             };
             loadVoices();
             if (this.speechSynth.onvoiceschanged !== undefined) {
@@ -174,7 +184,19 @@ class SoundEngine {
         }
     }
 
-    // 播放中文口訣語音 (例如 "7 乘以 8 等於多少")
+    // 轉為台灣繁體中文數字發音（避免數字直接唸出阿拉伯數字或英文）
+    toTaiwanZhNum(n) {
+        const digits = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+        if (n <= 9) return digits[n];
+        if (n < 20) {
+            return n === 10 ? '十' : '十' + digits[n % 10];
+        }
+        const tens = Math.floor(n / 10);
+        const ones = n % 10;
+        return digits[tens] + '十' + (ones > 0 ? digits[ones] : '');
+    }
+
+    // 播放中文口訣語音 (採用台灣國小標準口語語法：「A 乘以 B」與「多少 乘以 B 等於 C」)
     // forceSpeak: 聽寫模式下強制發聲 (即使預設開關未開)
     speakQuestion(factorA, factorB, isReverse = false, isFillA = false, forceSpeak = false) {
         this.lastQuestionParams = { factorA, factorB, isReverse, isFillA };
@@ -184,20 +206,27 @@ class SoundEngine {
         // 取消前一個未播完的語音
         this.speechSynth.cancel();
 
+        const zhA = this.toTaiwanZhNum(factorA);
+        const zhB = this.toTaiwanZhNum(factorB);
+        const zhProduct = this.toTaiwanZhNum(factorA * factorB);
+
         let text = '';
         if (isReverse) {
+            // 台灣國小逆向填空語法：「多少 乘以 八 等於 五十六」或「七 乘以 多少 等於 五十六」
             if (isFillA) {
-                text = `幾 乘以 ${factorB} 等於 ${factorA * factorB}`;
+                text = `多少 乘以 ${zhB} 等於 ${zhProduct}`;
             } else {
-                text = `${factorA} 乘以 幾 等於 ${factorA * factorB}`;
+                text = `${zhA} 乘以 多少 等於 ${zhProduct}`;
             }
         } else {
-            text = `${factorA} 乘 ${factorB}`;
+            // 台灣國小標準乘法口訣語法：「七 乘以 八」
+            text = `${zhA} 乘以 ${zhB}`;
         }
 
         const utter = new SpeechSynthesisUtterance(text);
-        utter.rate = 1.15; // 國小四年級以上節奏俐落，不拖沓
-        utter.pitch = 1.05;
+        utter.lang = 'zh-TW'; // 強制鎖定台灣繁體國語發音代碼
+        utter.rate = 1.05;    // 台灣學童最親切自然的語速節奏
+        utter.pitch = 1.0;
         if (this.speechVoice) {
             utter.voice = this.speechVoice;
         }

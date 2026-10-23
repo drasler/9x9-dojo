@@ -6,7 +6,7 @@
  *    每一級皆須過關 3 次（累積 3 顆修練印章 ●●●）才能晉升至下一級，上級過關 3 次方可晉階！
  * 3. 低階時間限制放寬（一階下級 8.0秒、中級 7.0秒、上級 6.0秒），建立兒童心算自信與扎實基礎。
  * 4. 視覺讀寫 (Reading) 與聽力聽寫 (Dictation) 分階分離。
- * 5. 靈獸伴學夥伴養成系統（仙蛋 -> 靈狐 -> 獵豹 -> 神龍）與每日連續修練打卡 (Streak)。
+ * 5. 奇獸伴學夥伴養成系統（奇獸蛋 -> 靈火狐 -> 疾風獵豹 -> 九天神龍）與每日連續修練打卡 (Streak)。
  * 6. 錯題復習限時 3 天 (72 小時)，逾期未清空觸發降階懲罰。
  */
 
@@ -191,7 +191,7 @@ class MultiplicationEngine {
             mistakes: {},         // 錯題本
             certificates: [],
             streak: { count: 0, lastDate: '' }, // 每日連續修練打卡
-            beast: { exp: 0, level: 1 },         // 靈獸夥伴養成
+            beast: { exp: 0, level: 1 },         // 奇獸夥伴養成
             lastDemoteCheck: Date.now()
         };
 
@@ -313,7 +313,7 @@ class MultiplicationEngine {
             if (prog.clears[3] >= 3) stars++;
             this.profile.tierStars[tierId] = stars;
 
-            // 獎勵靈獸 EXP：每次通關獲得 120 EXP
+            // 獎勵奇獸 EXP：每次通關獲得 120 EXP
             this.addBeastExp(120);
 
             // 更新每日修練連勝打卡
@@ -367,7 +367,7 @@ class MultiplicationEngine {
     }
 
     /**
-     * 靈獸伴學夥伴養成系統 (EXP 與等級成長)
+     * 奇獸伴學夥伴養成系統 (EXP 與等級成長)
      */
     addBeastExp(expAmount) {
         if (!this.profile.beast) {
@@ -396,9 +396,9 @@ class MultiplicationEngine {
 
     getBeastInfo(level) {
         if (level < 4) {
-            return { name: '乘法仙蛋', icon: '🥚', title: '初生靈卵・蘊育心算潛能' };
+            return { name: '乘法奇獸蛋', icon: '🥚', title: '初生奇卵・蘊育心算潛能' };
         } else if (level < 9) {
-            return { name: '火靈狐', icon: '🦊', title: '機敏伶俐・直覺反應倍增' };
+            return { name: '靈火狐', icon: '🦊', title: '機敏伶俐・直覺反應倍增' };
         } else if (level < 16) {
             return { name: '疾風獵豹', icon: '🐆', title: '迅疾如風・秒答百步穿楊' };
         } else {
@@ -592,7 +592,7 @@ class MultiplicationEngine {
         if (isCorrect) {
             this.profile.totalCorrect++;
             this.profile.maxCombo = Math.max(this.profile.maxCombo, 1);
-            // 答對獲得 8 點靈獸 EXP
+            // 答對獲得 8 點奇獸 EXP
             this.addBeastExp(8);
 
             // 若在錯題本中，答對減少錯誤計數或移除
