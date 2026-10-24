@@ -212,6 +212,21 @@ class MultiplicationEngine {
                 }
                 if (!loaded.streak) loaded.streak = { count: 0, lastDate: '' };
                 if (!loaded.beast) loaded.beast = { exp: 0, level: 1 };
+                // 自動修復並防呆歷史錯題物件，杜絕 undefined 顯示
+                if (loaded.mistakes) {
+                    Object.keys(loaded.mistakes).forEach(k => {
+                        const m = loaded.mistakes[k];
+                        if (!m.factorA || !m.factorB) {
+                            const parts = k.split('x');
+                            m.factorA = parseInt(parts[0], 10) || 2;
+                            m.factorB = parseInt(parts[1], 10) || 2;
+                        }
+                        if (!m.text) m.text = `${m.factorA} × ${m.factorB}`;
+                        if (!m.qText) m.qText = m.text;
+                        if (!m.answer) m.answer = m.factorA * m.factorB;
+                        if (!m.lastWrongAnswer || m.lastWrongAnswer === 'undefined') m.lastWrongAnswer = '未作答';
+                    });
+                }
                 return loaded;
             }
         } catch (e) {
@@ -605,7 +620,7 @@ class MultiplicationEngine {
             }
         } else {
             this.profile.totalWrong++;
-            this.recordMistake(this.currentQuestion.factorA, this.currentQuestion.factorB);
+            this.recordMistake(this.currentQuestion.factorA, this.currentQuestion.factorB, userAnswer);
         }
 
         this.saveProfile();
@@ -618,20 +633,27 @@ class MultiplicationEngine {
         };
     }
 
-    // 記錄錯題 (自建 3 天 deadline)
-    recordMistake(factorA, factorB) {
+    // 記錄錯題 (自建 3 天 deadline，並記錄最後錯誤作答，防呆 qText 與 text)
+    recordMistake(factorA, factorB, wrongAnswer = '') {
         const key = `${factorA}x${factorB}`;
         const now = Date.now();
+        const wrongStr = (wrongAnswer !== '' && wrongAnswer !== undefined && wrongAnswer !== null) ? String(wrongAnswer) : '未作答';
         if (this.profile.mistakes[key]) {
             this.profile.mistakes[key].count++;
             this.profile.mistakes[key].lastWrongAt = now;
+            this.profile.mistakes[key].lastWrongAnswer = wrongStr;
             this.profile.mistakes[key].deadline = now + MISTAKE_DEADLINE_MS;
+            if (!this.profile.mistakes[key].text) this.profile.mistakes[key].text = `${factorA} × ${factorB}`;
+            if (!this.profile.mistakes[key].qText) this.profile.mistakes[key].qText = `${factorA} × ${factorB}`;
+            if (!this.profile.mistakes[key].answer) this.profile.mistakes[key].answer = factorA * factorB;
         } else {
             this.profile.mistakes[key] = {
                 factorA,
                 factorB,
                 text: `${factorA} × ${factorB}`,
+                qText: `${factorA} × ${factorB}`,
                 answer: factorA * factorB,
+                lastWrongAnswer: wrongStr,
                 count: 1,
                 createdAt: now,
                 deadline: now + MISTAKE_DEADLINE_MS

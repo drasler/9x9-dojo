@@ -143,8 +143,8 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCloseMistakes: document.getElementById('btn-close-mistakes'),
         mistakesDeadlineSummary: document.getElementById('mistakes-deadline-summary'),
         mistakesListContainer: document.getElementById('mistakes-list-container'),
-        btnClearMistakes: document.getElementById('btn-clear-mistakes'),
         btnDrillMistakes: document.getElementById('btn-drill-mistakes'),
+        adventureMistakeLockBanner: document.getElementById('adventure-mistake-lock-banner'),
 
         // 奇獸伴學 Modal
         beastStatusPill: document.getElementById('beast-status-pill'),
@@ -272,6 +272,34 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderStages() {
         DOM.adventureStagesGrid.innerHTML = '';
         const unlockedTier = engine.profile.unlockedTier;
+        const mistakeList = engine.getMistakesList();
+
+        // 規則約束：若有未清空的易錯題，於闖關大地圖頂端顯示鮮明警告橫幅
+        if (DOM.adventureMistakeLockBanner) {
+            if (mistakeList.length > 0) {
+                DOM.adventureMistakeLockBanner.innerHTML = `
+                    <div class="mistake-lock-banner">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span style="font-size:1.2rem;">🔒</span>
+                            <span><strong>闖關挑戰已鎖定：</strong>尚有 <strong style="color:var(--accent-rose); font-size:1.05rem;">${mistakeList.length}</strong> 道錯題未消滅！必須先完成錯題特訓，才能繼續挑戰關卡！</span>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-sm" id="btn-banner-drill" style="white-space: nowrap; flex-shrink: 0; padding: 7px 16px; font-weight: 800;">
+                            🔥 立即特訓清空
+                        </button>
+                    </div>
+                `;
+                const btnBannerDrill = document.getElementById('btn-banner-drill');
+                if (btnBannerDrill) {
+                    btnBannerDrill.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        renderMistakesList();
+                        openModal(DOM.modalMistakes);
+                    });
+                }
+            } else {
+                DOM.adventureMistakeLockBanner.innerHTML = '';
+            }
+        }
 
         TIERS_CONFIG.forEach(cfg => {
             const isUnlocked = cfg.id <= unlockedTier;
@@ -476,6 +504,10 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.viewPractice.style.display = tabKey === 'practice' ? 'block' : 'none';
         DOM.viewArena.style.display = 'none';
 
+        if (tabKey === 'adventure') {
+            renderStages();
+        }
+
         if (state.inGame) {
             endRound(false);
         }
@@ -495,6 +527,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. 遊戲模式啟動
     // ==========================================
     function startTierAdventure(tierId, subLevel = null) {
+        // 規則約束：若有未清空之易錯題，嚴格禁止進行闖關挑戰！
+        const mistakeList = engine.getMistakesList();
+        if (mistakeList.length > 0) {
+            sound.playWrong();
+            alert(`⚠️ 目前尚有 ${mistakeList.length} 道錯題未消滅！\n為了奠定穩固的心算基礎，必須先在【易錯題重練簿】中完成特訓，才能繼續進行階級闖關挑戰！`);
+            renderMistakesList();
+            openModal(DOM.modalMistakes);
+            return;
+        }
+
         const prog = engine.getTierProgress(tierId);
         const activeSub = subLevel !== null ? subLevel : Math.min(3, prog.currentSub || 1);
         const subCfg = engine.getSubConfig(tierId, activeSub);
@@ -982,14 +1024,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 isUrgent = true;
             }
 
+            const qTitle = item.text || item.qText || `${item.factorA} × ${item.factorB}`;
+            const targetAns = item.answer || (item.factorA * item.factorB);
+            const lastWrong = (item.lastWrongAnswer && item.lastWrongAnswer !== 'undefined') ? item.lastWrongAnswer : '未作答';
+
             row.innerHTML = `
-                <div>
-                    <div style="font-size: 1.1rem; font-weight: 800;">${item.qText}</div>
-                    <div style="font-size: 0.78rem; color: var(--text-muted);">
-                        失誤次數: ${item.count} 次 ｜ 最後誤答: ${item.lastWrongAnswer || '未作答'}
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 1.15rem; font-weight: 800; color: var(--text-main); letter-spacing: 0.5px;">${qTitle} = ${targetAns}</div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 3px;">
+                        失誤次數: ${item.count || 1} 次 ｜ 最後誤答: <span style="color:var(--accent-rose); font-weight:700;">${lastWrong}</span>
                     </div>
                 </div>
-                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink: 0;">
                     <span class="mistake-badge">連對2次消滅</span>
                     <span class="mistake-deadline-tag ${isUrgent ? 'urgent' : ''}">${remainText}</span>
                 </div>
@@ -1074,14 +1120,6 @@ document.addEventListener('DOMContentLoaded', () => {
             openModal(DOM.modalMistakes);
         });
         DOM.btnCloseMistakes.addEventListener('click', () => closeModal(DOM.modalMistakes));
-        DOM.btnClearMistakes.addEventListener('click', () => {
-            if (confirm('確定要清空所有錯題記錄嗎？')) {
-                engine.clearMistakes();
-                renderMistakesList();
-                updateMistakesBadge();
-                checkOverdueAndDemotion();
-            }
-        });
         DOM.btnDrillMistakes.addEventListener('click', startMistakesDrill);
 
         DOM.btnToggleTheme.addEventListener('click', () => {
