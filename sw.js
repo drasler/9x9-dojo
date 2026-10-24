@@ -1,4 +1,4 @@
-const CACHE_NAME = 'math9x9-v2.6';
+const CACHE_NAME = 'math9x9-v2.7';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

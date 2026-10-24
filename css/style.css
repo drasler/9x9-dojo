@@ -903,7 +903,15 @@ body.in-arena #view-arena {
     font-weight: 700;
     background: rgba(244, 63, 94, 0.15);
     color: var(--accent-rose);
+    border: 1px solid rgba(244, 63, 94, 0.3);
     white-space: nowrap;
+}
+.mistake-badge.near-clear {
+    background: rgba(16, 185, 129, 0.18);
+    color: var(--accent-emerald);
+    border: 1px solid rgba(16, 185, 129, 0.45);
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.25);
+    font-weight: 800;
 }
 .mistake-lock-banner {
     background: rgba(244, 63, 94, 0.14);

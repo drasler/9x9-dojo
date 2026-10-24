@@ -212,7 +212,7 @@ class MultiplicationEngine {
                 }
                 if (!loaded.streak) loaded.streak = { count: 0, lastDate: '' };
                 if (!loaded.beast) loaded.beast = { exp: 0, level: 1 };
-                // 自動修復並防呆歷史錯題物件，杜絕 undefined 顯示
+                // 自動修復並防呆歷史錯題物件，杜絕 undefined 顯示，並初始化需消滅次數
                 if (loaded.mistakes) {
                     Object.keys(loaded.mistakes).forEach(k => {
                         const m = loaded.mistakes[k];
@@ -225,6 +225,9 @@ class MultiplicationEngine {
                         if (!m.qText) m.qText = m.text;
                         if (!m.answer) m.answer = m.factorA * m.factorB;
                         if (!m.lastWrongAnswer || m.lastWrongAnswer === 'undefined') m.lastWrongAnswer = '未作答';
+                        if (typeof m.streak !== 'number') m.streak = 0;
+                        if (typeof m.neededClears !== 'number') m.neededClears = Math.max(1, 2 - m.streak);
+                        if (typeof m.count !== 'number') m.count = 1;
                     });
                 }
                 return loaded;
@@ -532,7 +535,11 @@ class MultiplicationEngine {
 
         let factorA, factorB;
 
-        if (useHard) {
+        if (options.factorA !== undefined && options.factorB !== undefined) {
+            // 指定乘數與被乘數 (例如錯題特訓，100% 精準出題)
+            factorA = options.factorA;
+            factorB = options.factorB;
+        } else if (useHard) {
             let attempts = 0;
             let pair;
             do {
@@ -610,11 +617,13 @@ class MultiplicationEngine {
             // 答對獲得 8 點奇獸 EXP
             this.addBeastExp(8);
 
-            // 若在錯題本中，答對減少錯誤計數或移除
+            // 若在錯題本中，答對累計連續答對次數 (streak)，達 2 次消滅移除；否則消滅次數減 1
             const qKey = `${this.currentQuestion.factorA}x${this.currentQuestion.factorB}`;
             if (this.profile.mistakes[qKey]) {
-                this.profile.mistakes[qKey].count--;
-                if (this.profile.mistakes[qKey].count <= 0) {
+                const m = this.profile.mistakes[qKey];
+                m.streak = (m.streak || 0) + 1;
+                m.neededClears = Math.max(0, 2 - m.streak);
+                if (m.streak >= 2 || m.neededClears <= 0) {
                     delete this.profile.mistakes[qKey];
                 }
             }
@@ -639,7 +648,9 @@ class MultiplicationEngine {
         const now = Date.now();
         const wrongStr = (wrongAnswer !== '' && wrongAnswer !== undefined && wrongAnswer !== null) ? String(wrongAnswer) : '未作答';
         if (this.profile.mistakes[key]) {
-            this.profile.mistakes[key].count++;
+            this.profile.mistakes[key].count = (this.profile.mistakes[key].count || 1) + 1;
+            this.profile.mistakes[key].streak = 0; // 答錯重置連續答對計數
+            this.profile.mistakes[key].neededClears = 2; // 重置需答對次數為 2
             this.profile.mistakes[key].lastWrongAt = now;
             this.profile.mistakes[key].lastWrongAnswer = wrongStr;
             this.profile.mistakes[key].deadline = now + MISTAKE_DEADLINE_MS;
@@ -655,6 +666,8 @@ class MultiplicationEngine {
                 answer: factorA * factorB,
                 lastWrongAnswer: wrongStr,
                 count: 1,
+                streak: 0,
+                neededClears: 2,
                 createdAt: now,
                 deadline: now + MISTAKE_DEADLINE_MS
             };

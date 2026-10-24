@@ -22,7 +22,7 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js?v=2.6.0', { updateViaCache: 'none' })
+          navigator.serviceWorker.register('./sw.js?v=2.7.0', { updateViaCache: 'none' })
             .then((reg) => {
               // 主動檢查遠端是否有更新
               reg.update();
@@ -42,7 +42,7 @@
     </script>
 
     <!-- Stylesheets (含版本防快取) -->
-    <link rel="stylesheet" href="css/style.css?v=2.6.0">
+    <link rel="stylesheet" href="css/style.css?v=2.7.0">
 </head>
 <body>
 

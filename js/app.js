@@ -672,10 +672,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (state.gameMode === 'mistakes') {
             const item = state.mistakesQueue[(state.currentQuestionIndex - 1) % state.mistakesQueue.length];
             q = engine.generateQuestion({
-                factors: [item.factorA],
+                factorA: item.factorA,
+                factorB: item.factorB,
                 sensoryMode: 'reading',
-                mode: 'sequence',
-                seqIndex: item.factorB - 1
+                reverseRate: 0
             });
         } else {
             // practice 自由練習
@@ -955,6 +955,23 @@ document.addEventListener('DOMContentLoaded', () => {
             DOM.certDate.textContent = cert.date;
 
             openModal(DOM.modalExamResult);
+        } else if (state.gameMode === 'mistakes') {
+            const remainingList = engine.getMistakesList();
+            if (remainingList.length === 0) {
+                alert(`🎉 太厲害了！所有錯題已全部連續答對消滅！\n總共特訓: ${totalAttempted} 題，答對: ${state.correctCount} 題。\n天梯闖關挑戰已全面解鎖！`);
+            } else {
+                const clearedCount = state.mistakesQueue.length - remainingList.length;
+                let msg = `🎉 錯題特訓完成！\n總共練習: ${totalAttempted} 題，答對: ${state.correctCount} 題。\n`;
+                if (clearedCount > 0) {
+                    msg += `✨ 本次已徹底消滅 ${clearedCount} 道錯題！\n`;
+                }
+                msg += `尚有 ${remainingList.length} 道錯題（答對題目的需消滅次數減 1，再特訓一次即可消滅）！`;
+                alert(msg);
+            }
+            document.body.classList.remove('in-arena');
+            switchTab('adventure');
+            renderMistakesList();
+            openModal(DOM.modalMistakes);
         } else {
             alert(`🎉 特訓結束！\n總共練習: ${totalAttempted} 題\n答對題數: ${state.correctCount} 題\n正確率: ${Math.round(accuracy * 100)}%`);
             document.body.classList.remove('in-arena');
@@ -1027,6 +1044,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const qTitle = item.text || item.qText || `${item.factorA} × ${item.factorB}`;
             const targetAns = item.answer || (item.factorA * item.factorB);
             const lastWrong = (item.lastWrongAnswer && item.lastWrongAnswer !== 'undefined') ? item.lastWrongAnswer : '未作答';
+            const needed = (typeof item.neededClears === 'number') ? item.neededClears : Math.max(1, 2 - (item.streak || 0));
+            const badgeHtml = needed <= 1
+                ? `<span class="mistake-badge near-clear">⚡ 還需答對 1 次消滅</span>`
+                : `<span class="mistake-badge">需連對 2 次消滅</span>`;
 
             row.innerHTML = `
                 <div style="flex: 1; min-width: 0;">
@@ -1036,7 +1057,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink: 0;">
-                    <span class="mistake-badge">連對2次消滅</span>
+                    ${badgeHtml}
                     <span class="mistake-deadline-tag ${isUrgent ? 'urgent' : ''}">${remainText}</span>
                 </div>
             `;
