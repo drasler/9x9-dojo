@@ -1,0 +1,47 @@
+# ==========================================
+# 9x9 Dojo - Git 忽略設定 (.gitignore)
+# ==========================================
+
+# 第二類：本機自動化單元測試腳本與臨時沙盒檔案
+scratch/
+test/
+tests/
+test_*.js
+*.test.js
+*.spec.js
+
+# 第三類：瀏覽器實機測試截圖、錄影與臨時媒體檔案
+.tempmediaStorage/
+.user_uploaded/
+recordings/
+screenshots/
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.mp4
+*.mov
+# 保留專案必要之圖標目錄
+!icons/
+!icons/**
+
+# 開發環境日誌與臨時檔案
+*.log
+*.tmp
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 作業系統快取與設定檔
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 編輯器與 IDE 設定檔
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
