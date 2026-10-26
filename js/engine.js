@@ -31,140 +31,140 @@ const TIERS_CONFIG = [
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
         sensoryMode: 'reading',
         reverseRate: 0,
-        hardWeight: 0.15,
+        hardWeight: 0.10,
         badge: '🌱',
         subLevels: {
-            1: { name: '下級', subTitle: '初修篇', count: 15, timePerQuestion: 8.0, passRate: 0.80 },
-            2: { name: '中級', subTitle: '精進篇', count: 18, timePerQuestion: 7.0, passRate: 0.85 },
-            3: { name: '上級', subTitle: '巔峰篇', count: 20, timePerQuestion: 6.0, passRate: 0.85 }
+            1: { name: '下級', subTitle: '初修篇', count: 10, timePerQuestion: 15.0, passRate: 0.70 },
+            2: { name: '中級', subTitle: '精進篇', count: 12, timePerQuestion: 12.0, passRate: 0.75 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 15, timePerQuestion: 10.0, passRate: 0.80 }
         }
     },
     {
         id: 2,
         tier: '二階・穩紮穩打',
-        title: '極速讀寫進階 (2~9)',
-        desc: '題數增加、時間逐步微調，強化抗壓連續心算肌肉記憶',
+        title: '全表讀寫熟練 (2~9)',
+        desc: '充裕步調連續作答，深化神經連結，奠定肌肉記憶',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
         sensoryMode: 'reading',
         reverseRate: 0,
-        hardWeight: 0.25,
+        hardWeight: 0.15,
         badge: '🌿',
         subLevels: {
-            1: { name: '下級', subTitle: '初修篇', count: 18, timePerQuestion: 7.0, passRate: 0.85 },
-            2: { name: '中級', subTitle: '精進篇', count: 24, timePerQuestion: 6.2, passRate: 0.88 },
-            3: { name: '上級', subTitle: '巔峰篇', count: 30, timePerQuestion: 5.5, passRate: 0.88 }
+            1: { name: '下級', subTitle: '初修篇', count: 12, timePerQuestion: 12.0, passRate: 0.75 },
+            2: { name: '中級', subTitle: '精進篇', count: 15, timePerQuestion: 10.0, passRate: 0.80 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 18, timePerQuestion: 9.0, passRate: 0.80 }
         }
     },
     {
         id: 3,
         tier: '三階・易錯加權',
         title: '魔王陷阱爆破 (2~9)',
-        desc: '大幅提升 7x8, 6x7, 8x9 等國小最高頻易錯題出題比重',
+        desc: '針對 7x8, 6x7, 8x9 等國小最高頻易錯題加強正向反射記憶',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
         sensoryMode: 'reading',
         reverseRate: 0,
-        hardWeight: 0.55,
+        hardWeight: 0.35,
         badge: '⚔️',
         subLevels: {
-            1: { name: '下級', subTitle: '初修篇', count: 20, timePerQuestion: 6.0, passRate: 0.88 },
-            2: { name: '中級', subTitle: '精進篇', count: 28, timePerQuestion: 5.2, passRate: 0.90 },
-            3: { name: '上級', subTitle: '巔峰篇', count: 35, timePerQuestion: 4.5, passRate: 0.90 }
+            1: { name: '下級', subTitle: '初修篇', count: 15, timePerQuestion: 10.0, passRate: 0.80 },
+            2: { name: '中級', subTitle: '精進篇', count: 18, timePerQuestion: 9.0, passRate: 0.80 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 20, timePerQuestion: 8.0, passRate: 0.80 }
         }
     },
     {
         id: 4,
-        tier: '四階・逆向填空',
-        title: '除法思維逆推 (2~9)',
-        desc: '視覺逆向題（例如 7 × ? = 56），銜接國小高年級因數與除法心算',
+        tier: '四階・讀寫鞏固',
+        title: '全域正向精熟 (2~9)',
+        desc: '完全純正向讀寫算式，排除逆向干擾，深化直覺反射',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
         sensoryMode: 'reading',
-        reverseRate: 0.50,
-        hardWeight: 0.35,
+        reverseRate: 0,
+        hardWeight: 0.25,
         badge: '🔮',
         subLevels: {
-            1: { name: '下級', subTitle: '初修篇', count: 24, timePerQuestion: 5.5, passRate: 0.90 },
-            2: { name: '中級', subTitle: '精進篇', count: 32, timePerQuestion: 4.8, passRate: 0.90 },
-            3: { name: '上級', subTitle: '巔峰篇', count: 40, timePerQuestion: 4.2, passRate: 0.92 }
+            1: { name: '下級', subTitle: '初修篇', count: 16, timePerQuestion: 9.0, passRate: 0.80 },
+            2: { name: '中級', subTitle: '精進篇', count: 20, timePerQuestion: 8.0, passRate: 0.80 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 24, timePerQuestion: 7.5, passRate: 0.85 }
         }
     },
     {
         id: 5,
         tier: '五階・聽寫啟蒙',
-        title: '聽力盲測初探 (2~9)',
-        desc: '視覺與聽寫交替！螢幕隱藏算式，純聽口訣「七乘八」盲測秒答',
+        title: '正向聽力盲測 (2~9)',
+        desc: '視覺與聽寫交替！螢幕隱藏算式，純聽口訣「七乘八」秒答，無反推壓力',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
         sensoryMode: 'mix',
-        reverseRate: 0.2,
-        hardWeight: 0.35,
+        reverseRate: 0,
+        hardWeight: 0.25,
         badge: '🎧',
         subLevels: {
-            1: { name: '下級', subTitle: '初修篇', count: 25, timePerQuestion: 5.0, passRate: 0.90 },
-            2: { name: '中級', subTitle: '精進篇', count: 35, timePerQuestion: 4.5, passRate: 0.92 },
-            3: { name: '上級', subTitle: '巔峰篇', count: 45, timePerQuestion: 4.0, passRate: 0.94 }
+            1: { name: '下級', subTitle: '初修篇', count: 16, timePerQuestion: 8.0, passRate: 0.80 },
+            2: { name: '中級', subTitle: '精進篇', count: 20, timePerQuestion: 7.5, passRate: 0.80 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 24, timePerQuestion: 7.0, passRate: 0.85 }
         }
     },
     {
         id: 6,
         tier: '六階・疾風聽寫',
-        title: '全聽力聽寫盲測 (2~9)',
-        desc: '100% 聽寫題！完全依靠耳朵聽音與大腦聽覺記憶秒按數字',
+        title: '全聽力正向盲測 (2~9)',
+        desc: '100% 正向口訣聽寫！完全依靠耳朵聽音與大腦聽覺記憶秒按數字',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
         sensoryMode: 'dictation',
         reverseRate: 0,
-        hardWeight: 0.4,
+        hardWeight: 0.30,
         badge: '⚡',
         subLevels: {
-            1: { name: '下級', subTitle: '初修篇', count: 30, timePerQuestion: 4.2, passRate: 0.92 },
-            2: { name: '中級', subTitle: '精進篇', count: 45, timePerQuestion: 3.8, passRate: 0.94 },
-            3: { name: '上級', subTitle: '巔峰篇', count: 60, timePerQuestion: 3.5, passRate: 0.96 }
+            1: { name: '下級', subTitle: '初修篇', count: 18, timePerQuestion: 7.5, passRate: 0.80 },
+            2: { name: '中級', subTitle: '精進篇', count: 24, timePerQuestion: 7.0, passRate: 0.85 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 30, timePerQuestion: 6.5, passRate: 0.85 }
         }
     },
     {
         id: 7,
-        tier: '七階・聽寫逆向',
-        title: '聽覺逆向除法 (2~9)',
-        desc: '聽寫逆向題（「幾乘八等於五十六」），純靠聽音進行逆向推導',
+        tier: '七階・雙模合璧',
+        title: '視聽雙模流暢融合 (2~9)',
+        desc: '正向讀寫與聽寫平穩混跳，視聽雙感官肌肉記憶全面融會貫通',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
-        sensoryMode: 'dictation',
-        reverseRate: 0.6,
-        hardWeight: 0.45,
+        sensoryMode: 'mix',
+        reverseRate: 0,
+        hardWeight: 0.35,
         badge: '🔥',
         subLevels: {
-            1: { name: '下級', subTitle: '初修篇', count: 40, timePerQuestion: 3.8, passRate: 0.94 },
-            2: { name: '中級', subTitle: '精進篇', count: 55, timePerQuestion: 3.5, passRate: 0.96 },
-            3: { name: '上級', subTitle: '巔峰篇', count: 70, timePerQuestion: 3.0, passRate: 0.98 }
+            1: { name: '下級', subTitle: '初修篇', count: 20, timePerQuestion: 7.0, passRate: 0.85 },
+            2: { name: '中級', subTitle: '精進篇', count: 25, timePerQuestion: 6.5, passRate: 0.85 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 30, timePerQuestion: 6.0, passRate: 0.85 }
         }
     },
     {
         id: 8,
-        tier: '八階・雙模狂暴',
-        title: '極限雙模大亂鬥 (2~9)',
-        desc: '讀寫逆向與聽寫盲測隨機混跳，極限刺激',
+        tier: '八階・逆向思維',
+        title: '除法因數反推特訓 (2~9)',
+        desc: '高階挑戰！已具備穩固乘法反射後，進階挑戰逆向填空 (如 7 × ? = 56)',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
-        sensoryMode: 'mix',
-        reverseRate: 0.5,
-        hardWeight: 0.5,
+        sensoryMode: 'reading',
+        reverseRate: 0.40,
+        hardWeight: 0.35,
         badge: '🌪️',
         subLevels: {
-            1: { name: '下級', subTitle: '初修篇', count: 50, timePerQuestion: 3.0, passRate: 0.96 },
-            2: { name: '中級', subTitle: '精進篇', count: 65, timePerQuestion: 2.6, passRate: 0.98 },
-            3: { name: '上級', subTitle: '巔峰篇', count: 80, timePerQuestion: 2.3, passRate: 0.98 }
+            1: { name: '下級', subTitle: '初修篇', count: 25, timePerQuestion: 5.5, passRate: 0.85 },
+            2: { name: '中級', subTitle: '精進篇', count: 30, timePerQuestion: 5.0, passRate: 0.88 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 35, timePerQuestion: 4.5, passRate: 0.88 }
         }
     },
     {
         id: 9,
         tier: '九階・巔峰大師',
-        title: '百題零容錯極致考核',
-        desc: '百題 100% 正確率考核！錯一題即淘汰，唯有頂尖高手方能登頂',
+        title: '百題極致考核 (正反全能)',
+        desc: '正向讀寫與逆向反推綜合考核，速度與穩定度兼備的最高殿堂',
         factors: [2, 3, 4, 5, 6, 7, 8, 9],
         sensoryMode: 'mix',
-        reverseRate: 0.4,
-        hardWeight: 0.4,
+        reverseRate: 0.35,
+        hardWeight: 0.40,
         badge: '👑',
         subLevels: {
-            1: { name: '下級', subTitle: '初修篇', count: 50, timePerQuestion: 2.5, passRate: 1.00 },
-            2: { name: '中級', subTitle: '精進篇', count: 75, timePerQuestion: 2.2, passRate: 1.00 },
-            3: { name: '上級', subTitle: '巔峰篇', count: 100, timePerQuestion: 2.0, passRate: 1.00 }
+            1: { name: '下級', subTitle: '初修篇', count: 30, timePerQuestion: 4.5, passRate: 0.90 },
+            2: { name: '中級', subTitle: '精進篇', count: 50, timePerQuestion: 4.0, passRate: 0.92 },
+            3: { name: '上級', subTitle: '巔峰篇', count: 80, timePerQuestion: 3.5, passRate: 0.95 }
         }
     }
 ];
@@ -447,12 +447,8 @@ class MultiplicationEngine {
 
         if (overdueCount > 0) {
             const prevTier = this.profile.unlockedTier;
+            // 守護兒童學習自信：取消扣階懲罰機制，永遠保留孩子努力通關的成果！
             let demoted = false;
-
-            if (this.profile.unlockedTier > 1) {
-                this.profile.unlockedTier--;
-                demoted = true;
-            }
 
             keys.forEach(k => {
                 if (now > mistakes[k].deadline) {
