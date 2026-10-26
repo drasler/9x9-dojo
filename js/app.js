@@ -225,8 +225,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const prog = engine.getTierProgress(p.unlockedTier);
         const subName = ['下級', '中級', '上級', '大圓滿'][Math.min(3, (prog.currentSub || 1) - 1)];
 
+        const tierGroup = highestTier.tier.match(/【(.*?)】/)?.[0] || '';
+        const tierNameOnly = highestTier.tier.replace(/【.*?】/, '').split('・')[0];
+
         DOM.headerUserTier.textContent = `${highestTier.tier.split('・')[0]}・${subName}`;
-        DOM.statCurrentTier.textContent = `${highestTier.tier.split('・')[0]}・${subName}`;
+        if (tierGroup) {
+            DOM.statCurrentTier.innerHTML = `<span class="stat-tier-group">${tierGroup}</span><span class="stat-tier-title">${tierNameOnly}・${subName}</span>`;
+        } else {
+            DOM.statCurrentTier.textContent = `${tierNameOnly}・${subName}`;
+        }
 
         let totalStars = 0;
         Object.values(p.tierStars).forEach(s => totalStars += s);

@@ -301,10 +301,15 @@ body::after {
     background: var(--bg-card);
     border: 1px solid var(--border-card);
     border-radius: var(--radius-md);
-    padding: 14px;
+    padding: 12px 6px;
     text-align: center;
     position: relative;
     transition: var(--transition-smooth);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 76px;
 }
 .stat-box:hover {
     border-color: var(--primary-light);
@@ -317,16 +322,38 @@ body::after {
     margin-bottom: 4px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    white-space: nowrap;
 }
 .stat-val {
     font-size: 1.4rem;
     font-weight: 800;
     color: var(--text-main);
+    white-space: nowrap;
+    max-width: 100%;
 }
 .stat-val.accent-emerald { color: var(--accent-emerald); }
 .stat-val.accent-amber { color: var(--accent-amber); }
 .stat-val.accent-rose { color: var(--accent-rose); }
 .stat-val.accent-primary { color: var(--primary-light); }
+
+#stat-current-tier {
+    font-size: clamp(0.95rem, 1.2vw, 1.15rem);
+    white-space: nowrap;
+    letter-spacing: -0.5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.stat-tier-group {
+    font-size: 0.82em;
+    opacity: 0.9;
+    color: var(--accent-indigo);
+    margin-right: 2px;
+}
+.stat-tier-title {
+    font-size: 1em;
+    font-weight: 800;
+}
 
 /* Adventure Stage Cards Grid */
 .adventure-grid {
@@ -1004,13 +1031,17 @@ body.in-arena #view-arena {
         margin-bottom: 16px;
     }
     .stat-box {
-        padding: 10px 6px;
+        padding: 8px 4px;
+        min-height: 64px;
     }
     .stat-label {
         font-size: 0.72rem;
     }
     .stat-val {
         font-size: 1.25rem;
+    }
+    #stat-current-tier {
+        font-size: 0.95rem;
     }
     .glass-panel {
         padding: 16px 12px;
