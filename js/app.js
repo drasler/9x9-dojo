@@ -790,21 +790,56 @@ document.addEventListener('DOMContentLoaded', () => {
         if (key === 'backspace') {
             state.inputBuffer = state.inputBuffer.slice(0, -1);
             DOM.arenaAnswerVal.textContent = state.inputBuffer;
+            DOM.arenaAnswerBox.className = 'answer-display-box' + (state.inputBuffer ? ' active' : '');
             return;
         }
 
         if (state.inputBuffer.length < 3) {
-            state.inputBuffer += key;
-            DOM.arenaAnswerVal.textContent = state.inputBuffer;
+            const nextInput = state.inputBuffer + key;
+            const targetStr = engine.currentQuestion ? String(engine.currentQuestion.targetAnswer) : '';
 
-            if (engine.currentQuestion) {
-                const targetStr = String(engine.currentQuestion.targetAnswer);
-                if (state.inputBuffer === targetStr) {
-                    setTimeout(() => {
-                        handleAnswerSubmit(false);
-                    }, 40);
-                }
+            // 1. 完全答對
+            if (nextInput === targetStr) {
+                state.inputBuffer = nextInput;
+                DOM.arenaAnswerVal.textContent = nextInput;
+                DOM.arenaAnswerBox.className = 'answer-display-box active';
+                setTimeout(() => {
+                    handleAnswerSubmit(false);
+                }, 40);
+                return;
             }
+
+            // 2. 輸入尚未達到 2 位數（九九乘法答案最多為 2 位數，允許繼續輸入第 2 個數字）
+            if (nextInput.length < 2) {
+                state.inputBuffer = nextInput;
+                DOM.arenaAnswerVal.textContent = nextInput;
+                DOM.arenaAnswerBox.className = 'answer-display-box active';
+                return;
+            }
+
+            // 3. 輸入達到 2 位數且錯誤：執行目前錯誤的動作並直接清除，以方便使用者重新輸入！
+            DOM.arenaAnswerBox.className = 'answer-display-box wrong';
+            sound.playWrong();
+            sound.vibrate(25);
+
+            // 視為一次作答失誤：重置 Combo 並記錄至錯題本
+            state.combo = 0;
+            DOM.arenaComboDisplay.style.visibility = 'hidden';
+            if (engine.currentQuestion) {
+                engine.recordMistake(engine.currentQuestion.factorA, engine.currentQuestion.factorB, nextInput);
+                updateMistakesBadge();
+            }
+
+            // 直接清除使用者輸入的數字，方便立即重新輸入！
+            state.inputBuffer = '';
+            DOM.arenaAnswerVal.textContent = '';
+
+            // 250ms 後若無新輸入，平緩復原外框樣式
+            setTimeout(() => {
+                if (state.inputBuffer === '' && DOM.arenaAnswerBox.classList.contains('wrong')) {
+                    DOM.arenaAnswerBox.className = 'answer-display-box';
+                }
+            }, 250);
         }
     }
 
