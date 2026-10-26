@@ -188,7 +188,8 @@ class MultiplicationEngine {
             totalCorrect: 0,
             totalWrong: 0,
             maxCombo: 0,
-            mistakes: {},         // 錯題本
+            mistakes: {},         // 錯題本 (待消滅中)
+            cumulativeMistakes: {}, // 統計使用以來累計錯誤紀錄 { '3x8': 5, '3x5': 2, ... }
             certificates: [],
             streak: { count: 0, lastDate: '' }, // 每日連續鍛鍊打卡
             beast: { exp: 0, level: 1 },         // 奇獸夥伴養成
@@ -212,6 +213,15 @@ class MultiplicationEngine {
                 }
                 if (!loaded.streak) loaded.streak = { count: 0, lastDate: '' };
                 if (!loaded.beast) loaded.beast = { exp: 0, level: 1 };
+                if (!loaded.cumulativeMistakes) {
+                    loaded.cumulativeMistakes = {};
+                    if (loaded.mistakes) {
+                        Object.keys(loaded.mistakes).forEach(k => {
+                            const m = loaded.mistakes[k];
+                            loaded.cumulativeMistakes[k] = (m && typeof m.count === 'number') ? m.count : 1;
+                        });
+                    }
+                }
                 // 自動修復並防呆歷史錯題物件，杜絕 undefined 顯示，並初始化需消滅次數
                 if (loaded.mistakes) {
                     Object.keys(loaded.mistakes).forEach(k => {
@@ -668,6 +678,11 @@ class MultiplicationEngine {
                 deadline: now + MISTAKE_DEADLINE_MS
             };
         }
+
+        // 永久累計使用以來的錯誤統計 (不因錯題消滅而被刪除)
+        if (!this.profile.cumulativeMistakes) this.profile.cumulativeMistakes = {};
+        this.profile.cumulativeMistakes[key] = (this.profile.cumulativeMistakes[key] || 0) + 1;
+
         this.saveProfile();
     }
 
@@ -678,6 +693,75 @@ class MultiplicationEngine {
             const deadB = b.deadline || 0;
             return deadA - deadB;
         });
+    }
+
+    // 統計使用以來最常錯誤的排列 (以 2~9 綜合歸類，例如 3x8 與 3x5 皆歸類在 3 的乘法)
+    getFactorMistakeStats() {
+        if (!this.profile.cumulativeMistakes) {
+            this.profile.cumulativeMistakes = {};
+            if (this.profile.mistakes) {
+                Object.keys(this.profile.mistakes).forEach(k => {
+                    const m = this.profile.mistakes[k];
+                    this.profile.cumulativeMistakes[k] = (m && typeof m.count === 'number') ? m.count : 1;
+                });
+            }
+        }
+
+        const factors = [2, 3, 4, 5, 6, 7, 8, 9];
+        const statsMap = {};
+        let totalErrors = 0;
+
+        factors.forEach(f => {
+            statsMap[f] = {
+                factor: f,
+                name: `${f} 的乘法`,
+                totalCount: 0,
+                breakdown: []
+            };
+        });
+
+        Object.keys(this.profile.cumulativeMistakes).forEach(key => {
+            const count = this.profile.cumulativeMistakes[key] || 0;
+            if (count <= 0) return;
+
+            const parts = key.split('x');
+            const factorA = parseInt(parts[0], 10);
+            const factorB = parseInt(parts[1], 10);
+
+            // 歸類至 factorA 的乘法（如 3x8、3x5 皆歸類在 3 的乘法）
+            if (statsMap[factorA]) {
+                statsMap[factorA].totalCount += count;
+                statsMap[factorA].breakdown.push({
+                    key,
+                    factorA,
+                    factorB,
+                    text: `${factorA} × ${factorB}`,
+                    count
+                });
+                totalErrors += count;
+            }
+        });
+
+        // 轉換為陣列、排序細項明細與計算百分比
+        const factorsRank = factors.map(f => {
+            const item = statsMap[f];
+            item.breakdown.sort((a, b) => b.count - a.count);
+            item.percentage = totalErrors > 0 ? Math.round((item.totalCount / totalErrors) * 100) : 0;
+            return item;
+        });
+
+        // 依錯誤總次數由多到少排序（最常錯誤的排在最前）
+        factorsRank.sort((a, b) => {
+            if (b.totalCount !== a.totalCount) {
+                return b.totalCount - a.totalCount;
+            }
+            return a.factor - b.factor;
+        });
+
+        return {
+            totalErrors,
+            factorsRank
+        };
     }
 
     // 清空錯題本

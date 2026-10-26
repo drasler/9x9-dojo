@@ -68,7 +68,13 @@ document.addEventListener('DOMContentLoaded', () => {
         viewAdventure: document.getElementById('view-adventure'),
         viewExam: document.getElementById('view-exam'),
         viewPractice: document.getElementById('view-practice'),
+        viewStats: document.getElementById('view-stats'),
         viewArena: document.getElementById('view-arena'),
+
+        // 常錯統計視圖
+        statsTotalWrongCount: document.getElementById('stats-total-wrong-count'),
+        statsEmptyState: document.getElementById('stats-empty-state'),
+        statsFactorsRankContainer: document.getElementById('stats-factors-rank-container'),
 
         // 統計概覽
         statCurrentTier: document.getElementById('stat-current-tier'),
@@ -487,6 +493,124 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // 渲染常錯統計與弱點分析視圖 (2~9 綜合排列)
+    function renderStatsView() {
+        if (!DOM.viewStats || !DOM.statsFactorsRankContainer) return;
+
+        const statsData = engine.getFactorMistakeStats();
+        const total = statsData.totalErrors;
+
+        if (DOM.statsTotalWrongCount) {
+            DOM.statsTotalWrongCount.textContent = total.toLocaleString();
+        }
+
+        if (total === 0) {
+            if (DOM.statsEmptyState) DOM.statsEmptyState.style.display = 'block';
+            DOM.statsFactorsRankContainer.innerHTML = '';
+            return;
+        }
+
+        if (DOM.statsEmptyState) DOM.statsEmptyState.style.display = 'none';
+        DOM.statsFactorsRankContainer.innerHTML = '';
+
+        // 依錯誤排名渲染 2~9 的各乘數卡片
+        statsData.factorsRank.forEach((item, index) => {
+            const card = document.createElement('div');
+            card.className = 'stats-rank-card';
+
+            // 排行徽章
+            let rankBadge = `${index + 1}`;
+            if (item.totalCount === 0) {
+                rankBadge = '✅';
+            } else if (index === 0) {
+                rankBadge = '🥇';
+            } else if (index === 1) {
+                rankBadge = '🥈';
+            } else if (index === 2) {
+                rankBadge = '🥉';
+            }
+
+            // 進度條顏色與漸變
+            let barGradient = 'linear-gradient(90deg, #10b981, #06b6d4)';
+            if (item.percentage >= 30) {
+                barGradient = 'linear-gradient(90deg, #f43f5e, #fb7185)';
+            } else if (item.percentage >= 15) {
+                barGradient = 'linear-gradient(90deg, #f59e0b, #fbbf24)';
+            } else if (item.totalCount > 0) {
+                barGradient = 'linear-gradient(90deg, #6366f1, #818cf8)';
+            }
+
+            // 細項算式明細
+            let breakdownHtml = '';
+            if (item.totalCount === 0) {
+                breakdownHtml = '<span class="stats-breakdown-chip clean">✨ 零失誤・完美掌握！</span>';
+            } else {
+                item.breakdown.forEach(b => {
+                    breakdownHtml += `<span class="stats-breakdown-chip" title="累計失誤 ${b.count} 次">${b.text} (${b.count}次)</span>`;
+                });
+            }
+
+            // 快捷特訓按鈕
+            const drillBtnHtml = `
+                <button type="button" class="btn btn-secondary btn-sm drill-factor-btn" data-factor="${item.factor}" style="padding: 5px 12px; font-size: 0.82rem; border-radius: 8px;">
+                    ⚡ 特訓 ${item.factor} 的乘法
+                </button>
+            `;
+
+            card.innerHTML = `
+                <div class="stats-rank-header">
+                    <div class="stats-rank-title-group">
+                        <span class="stats-rank-badge">${rankBadge}</span>
+                        <div>
+                            <span class="stats-rank-name">${item.name}</span>
+                            <span style="font-size:0.8rem; color:var(--text-muted); margin-left:6px;">(${item.factor} × 2 ~ 9)</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-size:0.88rem; font-weight:700; color:${item.totalCount > 0 ? 'var(--accent-rose)' : 'var(--accent-emerald)'};">
+                            ${item.totalCount > 0 ? `${item.totalCount} 次失誤 (${item.percentage}%)` : '零失誤'}
+                        </span>
+                        ${drillBtnHtml}
+                    </div>
+                </div>
+
+                <div class="stats-rank-bar-bg">
+                    <div class="stats-rank-bar-fill" style="width: ${Math.max(item.percentage, item.totalCount > 0 ? 5 : 0)}%; background: ${barGradient};"></div>
+                </div>
+
+                <div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 4px;">常錯具體題目：</div>
+                    <div class="stats-breakdown-row">
+                        ${breakdownHtml}
+                    </div>
+                </div>
+            `;
+
+            // 綁定「特訓」按鈕
+            const btnDrill = card.querySelector('.drill-factor-btn');
+            if (btnDrill) {
+                btnDrill.addEventListener('click', () => {
+                    drillSpecificFactor(item.factor);
+                });
+            }
+
+            DOM.statsFactorsRankContainer.appendChild(card);
+        });
+    }
+
+    // 快捷跳轉並選取特定乘數進行自由特訓
+    function drillSpecificFactor(factor) {
+        switchTab('practice');
+        DOM.practiceFactorsSelector.querySelectorAll('.factor-btn').forEach(b => {
+            b.classList.remove('active');
+            if (parseInt(b.dataset.factor, 10) === factor) {
+                b.classList.add('active');
+            }
+        });
+        state.practiceFactors = [factor];
+        DOM.btnStartPractice.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
     // ==========================================
     // 2. 視圖切換
     // ==========================================
@@ -502,10 +626,15 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.viewAdventure.style.display = tabKey === 'adventure' ? 'block' : 'none';
         DOM.viewExam.style.display = tabKey === 'exam' ? 'block' : 'none';
         DOM.viewPractice.style.display = tabKey === 'practice' ? 'block' : 'none';
+        if (DOM.viewStats) {
+            DOM.viewStats.style.display = tabKey === 'stats' ? 'block' : 'none';
+        }
         DOM.viewArena.style.display = 'none';
 
         if (tabKey === 'adventure') {
             renderStages();
+        } else if (tabKey === 'stats') {
+            renderStatsView();
         }
 
         if (state.inGame) {
@@ -519,6 +648,7 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.viewAdventure.style.display = 'none';
         DOM.viewExam.style.display = 'none';
         DOM.viewPractice.style.display = 'none';
+        if (DOM.viewStats) DOM.viewStats.style.display = 'none';
         DOM.viewArena.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'instant' });
     }

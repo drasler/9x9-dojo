@@ -77,6 +77,9 @@
             <button type="button" class="mode-tab" data-mode="practice" role="tab" id="tab-practice" aria-selected="false">
                 🎯 <span class="tab-text">自由特訓</span>
             </button>
+            <button type="button" class="mode-tab" data-mode="stats" role="tab" id="tab-stats" aria-selected="false">
+                📊 <span class="tab-text">常錯統計</span>
+            </button>
         </nav>
 
         <!-- 3 天錯題未清空降階警告橫幅容器 -->
@@ -249,6 +252,33 @@
                 <button type="button" class="btn btn-primary btn-block" id="btn-start-practice" style="padding: 16px; font-size: 1.15rem;">
                     🎯 開始自由特訓
                 </button>
+            </div>
+        </section>
+
+        <!-- 主視圖 4: 📊 常錯統計與弱點分析 (Mistake Stats & Weakness Analysis) -->
+        <section id="view-stats" class="glass-panel" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <h2 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 4px;">📊 乘法常錯弱點統計</h2>
+                    <p style="font-size: 0.88rem; color: var(--text-muted);">
+                        統計使用以來 2~9 各乘數錯誤排行，精準抓出最常卡關的盲點算式！
+                    </p>
+                </div>
+                <div style="font-size: 0.82rem; color: var(--text-muted); background: rgba(0,0,0,0.25); padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-card);">
+                    累計總錯誤：<strong id="stats-total-wrong-count" style="color: var(--accent-rose); font-size: 1rem;">0</strong> 題
+                </div>
+            </div>
+
+            <!-- 空狀態提示 (當目前還沒有任何錯誤時) -->
+            <div id="stats-empty-state" style="display:none; text-align:center; padding: 40px 20px;">
+                <div style="font-size: 3rem; margin-bottom: 10px;">🎉</div>
+                <h3 style="font-size: 1.15rem; font-weight: 800; margin-bottom: 6px;">太厲害了！目前沒有任何錯誤紀錄</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted);">持續闖關或進行考試，系統會自動為您分析最容易失誤的乘數弱點。</p>
+            </div>
+
+            <!-- 2~9 綜合錯誤排行榜容器 -->
+            <div id="stats-factors-rank-container" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- 由 JavaScript 動態渲染 2~9 的錯誤排行卡片 -->
             </div>
         </section>
 
